@@ -1,0 +1,72 @@
+## Pig basic commands.
+
+#We can use pig grunt in 2 mode.
+1) LOCAL Mode    
+2) MAPREDUCE Mode(default)
+
+#To open in local mode
+pig -x LOCAL
+
+#To open in MapReduce mode
+pig or pig -x MAPREDUCE
+
+#To exit from grunt shell 
+quit
+
+
+# Load and Store functions.
+
+// to load the data into a relation from a text file.
+data = LOAD 'filepath' USING PigStorage(',') AS (name chararray,age int,city chararray);
+
+// to store the data into a file.
+STORE data INTO 'destination Path' USING PigStorage(',');
+
+##About PigStorage.
+
+1) PigStorage : Loads and stores data using field delimiter. it is the default storage.
+2) BinStorage : Loads and stores data from binary files.
+3) TextLoader : Loads the data from text files.
+4) JsonLoader and JsonStorage : Loads and stores the json data.
+5) HBaseStorage : Loads and Stores the data from HBase
+
+
+##Grunt Supports hadoop file system commands.
+ls,cat,mkdir,rm,cd
+
+##DUMP and DESCRIBE
+1)dump function will display the relation data on the cosole.
+2)describe function will display the schema of a relation.
+
+##Pig Data Types.
+1) Numeric    int,long,float,double
+2) Text       chararray
+3) Binary     bytearray
+4) complex    tuple,bag,map
+
+## Explain and illustrate
+1) explain will give the logical and physical plan
+2) illustrate will give just logical plan along with some sample output.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
