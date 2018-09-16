@@ -1,0 +1,17 @@
+## Hive commands
+
+#Create the database.
+create database testdb;
+
+#use the database.
+use database testdb;
+
+#create the table.
+create table testTable(name string,age int,city string);
+
+#insert into table.
+inert into table testTable values ('a',10,'Bengaluru');
+
+#retrive the data.
+select *from testTable;
+
