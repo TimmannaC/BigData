@@ -17,3 +17,6 @@ put 'Emp','1','professional_data:experience','2'
 #Retrieving data.
 scan 'Emp'
 
+#To drop the table we need to disable the table first.
+disable 'Emp';
+drop 'Emp';
