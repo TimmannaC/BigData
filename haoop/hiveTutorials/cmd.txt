@@ -4,10 +4,13 @@
 create database testdb;
 
 #use the database.
-use database testdb;
+use testdb;
 
 #create the table.
 create table testTable(name string,age int,city string);
+
+#To get the table metadata.
+desc <tableName> or desc formatted <tableName>
 
 #insert into table.
 inert into table testTable values ('a',10,'Bengaluru');
