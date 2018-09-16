@@ -1,7 +1,11 @@
 ## Hive commands
 
 #Create the database.
-create database testdb;
+create database testdb; or create schema testdb;
+
+##to show the databases and tables
+show databases;
+show tables;
 
 #use the database.
 use testdb;
@@ -18,6 +22,31 @@ inert into table testTable values ('a',10,'Bengaluru');
 #retrive the data.
 select *from testTable;
 
+##Hive Tables
+
+1) Internal
+on droping the internal table data inside the table is lost forever.
+
+CREATE TABLE Emp(name STRING,age INT) 
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION 'File Name';
+
+2) External
+On dropping the external table data inside the table is not deleted.
+only the table gets dropped but the data is still present in HDFS.
+
+CREATE EXTERNAL TABLE Emp(name STRING,age INT)
+ROW FORMAT DELIMITTED
+FILEDS TERMINATED BY ','
+LOCATION 'File Name';
+
+
+##HIVE UDF
+
+UDF         ---     USER DEFINED FUNCTIONS
+UDAF        ---     USER DEFINED AGGREGATION FUNCTIONS
+UDTF        ---     USER DEFINED TABLE FUNCTIONS
 
 /*****************************************************************************************************************************/
 #Functions in Hive;
