@@ -1,0 +1,8 @@
+
+## Sqoop is the command line tool to transfer the data from relational database to hadoop.
+
+#Import command.
+sqoop import 
+--connect jdbc:mysql://localhost/nav  --username root --password manager --table movies 
+--m 1 
+--target-dir /movie1
