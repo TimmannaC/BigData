@@ -1,0 +1,262 @@
+
+	- Python Variables
+		- creating an variables in python is very simple
+			- a variable is created the moment you assign a value to it.			
+			  Examples
+				- x = 5 
+				- y = "john"
+				print(x)
+				print(y)
+				
+			- Variables do not need to be declared with any particular type and can change type after they have been set.
+				eg:
+					x = 4 #x is of type int
+					x = "silly" #not x is reassigned now with string value so x is of String type now.
+					
+			- Output variables
+				- The python print statement is often used to print the variables.
+					eg: x = "awesome"
+						print(x) // output -> awesome
+				
+				- To combine string with variable Python uses + character
+					eg: print("Python is "+x) // output -> Python is awesome.
+				
+				- You can use + character to add variables
+					eg: x = "python is"
+						y = "awesome"
+						z = x + y
+						print(z) // output is -> python is awesome
+				
+				- For numbers + character act as mathematical operator.
+						x = 5
+						y = 10
+						print(x + y) // 15
+						
+				Note -	If you try to combine string with number python will give an error.
+							x = 5
+							y = "john"
+							print(x + y)
+					
+			- Python numbers
+				- There are three numeric types in python
+					- int
+					- float
+					- complex
+					
+				- Variables of numeric types are created when you assign a value to them.	
+					x = 2 #int
+					y = 10.2 #float
+					z = 1 + 2j #complex
+					
+		Note 	- To find the variable type use type function
+					print(type(x)) // <class 'int'>
+					print(type(y)) // <class 'float'>
+					print(type(z)) // <class 'complex'>
+				
+				- Python Casting	
+					- Specifying a variable Type
+						- there may be times when you want to specify the type on to a variable. This can be done with casting.
+						- casting in python is done using constructor functions
+						- int() - constructs an integer number literal.
+						- float() - constructs an float number literal.
+						- str() - constructs an string literal.
+				
+			- String Literals								
+					- String literals in python are either surrounded by single quotation or double quotation marks.
+					- eg : 'hello' is same as "hello"
+					- string can be outputed to screen using print() function eg: print("hello")
+					- strings in python are array of unicode characters.However python does not have a character data type, a single character is simply a string with
+						a length of 1. Square bracket can be used to access elements of a string.
+					- eg: a = "Hello, World!"
+							1) print(a[1]) // e
+							2) substring eg: print([2:5]) // llo
+							3) strip() method to remove any whiteSpaces 
+								eg: a = "Hello, World!		"
+										print(a.strip()) //"Hello, World!"
+							4) len() method to return the length of a string	
+								a = "Hello, World!"
+									print(len(a)) //13
+							5)lower()
+							6)upper()
+							7)replace() method replaces a string with other string
+								a = "Hello, world!"
+								print(a.replace("H","J")) //"Jello, world!"
+							8)split() method replaces the string with substrings
+								print(a.split(",")) # returns ['Hello',"world!"]
+					
+					- to take an input from user use input() function
+					
+			
+			- Python Collections(Arrays)
+				- There are 4 collection data types in the python programming language.
+					1) List - is a collection which is ordered and changeable. Allows duplicate members.
+					2) Tuple - is a collection which is ordered and unchangeable. Allow duplicate members.
+					3) set - is a collection which is unordered and unindexed. No duplicate members.
+					4) dictionary - is a collection which is unordered,changable and indexed. No duplicate members.
+				
+				List - 
+					- list is a collection which is ordered and changeable. In python lists are written with square brackets. 
+						- creating a List:
+							thislist = ['apple','banana','cherry']
+							print(thislist) // ['apple','banana','cherry']
+	
+					- Access Items:
+						- print(thislist[1]) // banana
+					
+					- Change Item value
+						- thislist[1] = "blackcurrant"
+							print(thislist) //['apple','blackcurrant','cherry']
+					
+					- Loop Through a list
+						- for x in thislist:
+							print(x)
+					
+					- List length
+						- print(len(thislist))
+					
+					- Add Items to a list using append() method
+						- thislist.append("orange")
+							print(thislist) // ['apple','blackcurrant','cherry','orange']
+							
+					- To insert at specific index
+						- thislist.insert(1,"orange") 
+							print(thislist) // ['apple', 'orange', 'banana', 'cherry']	
+					
+					- Remove item
+						- this.remove("banana")
+							print(thislist) // ['apple','cherry']
+					
+					- remove() method removes the specified item
+					- pop() method removes the specified index or last item if index not specified.
+					- del removes the specified index
+					- clear() method empties the list
+				
+					- It is also possible to create an list() using constructor.
+						- thislist = list(('apple','banana','cherry')) # note double round-brackets
+				
+				- Tuple
+					- a tuple is a collection which is ordered and unchangable.
+					- (...) --> symbol
+					- can't modify and add new elements in a tuple.
+					- Tuple constructor to make a tuple.
+						- tuple((....)) // double round-brackets
+				
+				- Set
+					- set is a collection which is unordered and unindexed.
+					- Using set we can perform union,intersection and diff operations.
+					- sets are written using curly braces {...}	
+						eg: thisset = {'apple','banana','cherry'}
+					
+					- Add Items
+						- use add() to add one item
+						- use update() to add more then one item
+							eg: thislist.add("orange"),
+								thislist.update(['orange','mango','graphes'])
+					
+					- Remove Items
+						- use remove() or discard() method
+					NOTE - If the item to remove does not exist, remove will raise an error.
+					NOTE - If the item to remove dors not exist, discard will not raise an error
+					
+					- set() constructor to make a set.
+						set((...)) # note double round-brackets.
+				
+				- Dictionary
+					- dictionary is a collection which is unordered,changeable & indexed,
+					- dictionaries are wrtiiten with curly brackets. and they hae key and values.
+					- eg: thisdict = {
+								"brand":"Ford",
+								"model":"Mustang",
+								"year":1964
+								}
+					
+					- Accessing Items
+						- You can access the items of a dictionary by referring to its key name:
+						- eg: x = thisdict['model'] or thisdict.get('model')
+						- we can use values() function to return values only.
+						- we can use items() to get both key and values.	
+							eg: for x,y thisdict.items():
+									print(x,y)
+					- We can use dict() constructor to make a dictionary.
+				
+				- If--else:
+					python has elif instead of else (this true condition)
+					a = 33
+					b = 33
+					if b > a: 
+						print("b is greater than a")
+					elif a == b:
+						print("a and b are equal")
+					
+					- else catches anything
+					   if b > a: 
+						print("b is greater than a")
+					   elif a == b:
+						print("a and b are equal")
+					   else:
+					    print("a is > then b")
+					   	
+					- short hand if:
+							if a > b : print("a is > than b")
+					- short hand if...else
+							print("A") if a > b else print("B")
+							eg: print("A") if a > b else print("=") if a == b else print("B") 
+					
+					- and keyword
+							if a > b and c > a:
+								print("both condtions are true")
+					- or keyword
+							if a > b or a > c:
+								print("At least one of the conditon is true")
+					
+				-Python loops
+					- while loops	
+					- for loops
+						eg: i = 1
+							- while i < 6:
+								print(i)
+								i += 1
+							- fruits = ["apple", "banana", "cherry"]
+								for x in fruits:
+									print(x)
+							- Strings are also an iterable objects.	
+								eg: for x in "banana"
+										print(x)
+					
+					- Python Functions
+						- In python function is defined using def keyword
+							eg: def myFunc():
+										print("Inside function")
+							                  
+					- Python lambda functions		
+						- lambda function can take any no of arguments but can only have one expression
+						- Syntax lambda arguments : expression
+						
+					- Arrays In Python
+						- array is an special data structure which can hold multiple values in one single variable.
+						- python does not have built in support for Arrays, byt python lists can be used instead.
+						- functions that can be applied on an arrays are 
+								- len()
+								- append() -- to add an elements to an array.
+								- pop() -- to remove an element from an array. eg: cars.pop(1)
+								- remove() -- to remove an elements from an array. eg: cars.remove("Volvo)
+						NOTE :  - remove() method only removes the first occurence of the specified value.
+								- clear() removes all the elements from the list.
+								- extend() add the elements of a list to the end of the current list.
+								- reverse() Reverses the order of the list.
+								- sort() Sorts the list.
+					    Note: Python does not have built-in support for Arrays, but Python Lists can be used instead.
+					
+					
+					
+				--Python Classes/Objects
+						- python is an object oriented programming language.
+						- Almost everything is an object in python. with its methods and properties.
+						
+						- In python to create an class we need to use class keyword:
+							- class MyClass:
+								x = 5
+							- To create an object use class name
+								eg: p1 = MyClass();	
+					
+		
