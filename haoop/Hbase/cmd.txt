@@ -3,7 +3,7 @@
 #List the tables.
 list
 
-#Create teh table
+#Create the table
 create 'Emp','personal_data','professional_data'
 
 #Describe the table.
