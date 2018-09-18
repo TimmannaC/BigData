@@ -1,9 +1,9 @@
 # Running multiple wokers on a single instance in spark.
 
-### Start the master process.
+### * Start the master process.
 > ./start-master.sh
 
-### Start the worker processes.
+### * Start the worker processes.
 
 ###### NOTE : Before starting the worker processes we need to modify the default spark-env,sh file.
       - Take the back up of spark-env.sh-template and rename it to spark-env.sh
