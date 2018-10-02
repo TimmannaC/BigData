@@ -1,127 +1,205 @@
-	
-		Kafka Tutorials from The Definitive Guidance Book.
+Kafka Tutorials from The Definitive Guidance Book.
 		
-		why kafka	?
-			- Kafka is like a messaging system in that it lets you publish and subscribe to streams of messages.
-			- it is similar to products like ActiveMQ,RabbitMQ.
+why kafka	?
+	- Kafka is like a messaging system in that it lets you publish and subscribe to streams of messages.
+	- it is similar to products like ActiveMQ,RabbitMQ.
+	
+-- Messages & Batches
+	- A uint of data in kafka is called as a message.
+	- A messages can have an optional bit of metadata, which is referred to as a key.
+	- keys are used when messages are to be written to partitions in a more controlled manner.
+	- For efficiency, messages are written into kafka in batches.
+	
+	-- The diff b/w kafka and other messaging products are:
+		1) kafka lets you have a central platform that can scale elastically to handle all the streams of data
+		2) kafka is a true storage system build to store data for as long as you like.
+		
+	- Kafka follows publish/subscribe design pattern.
+	- Pub/sub systems often have a broker,a central point where messages are published.
+	- kafka is often described as a “distributed commit log” or more recently as a “distributing streaming platform.”
+	
+- Topics and Partitions
+	- Messages in kafka are categorized into topics.
+	- The closest analogies for a topic is a folder in a filesystem.
+	- Topics are additionally broken down into a number of partitions.
+	- a partition is a single log.
+	- Messages are written to it in an append-only fashion, and are read in order from beginning to end.
 			
-		- Messages & Batches
-			- A uint of data in kafka is called as a message.
-			- A messages can have an optional bit of metadata, which is referred to as a key.
-			- keys are used when messages are to be written to partitions in a more controlled manner.
-			- For efficiency, messages are written into kafka in batches.
-			
-			-- The diff b/w kafka and other messaging products are:
-				1) kafka lets you have a central platform that can scale elastically to handle all the streams of data
-				2) kafka is a true storage system build to store data for as long as you like.
+-- Topics & Partitions
+	- Messages in kafka are categorized into topics.
+	- the closest analogies for a topic is a folder in filesystem.
+	- Topics are additionally broken down into a number of partitions.
+	- each partition ca be hosted on a different server, means single topic can be scaled horizontally across multiple servers to provide performance.
+
+-- Producers & Consumers
+	- kafka clients are users of the system, and there are 2 basic types: producers & consumers.
+	- producers create a new messages. In pub/sub systems, these may be called publishers or writers.
+	- Consumers read messages. In pub/sub systems, these clients may be called subscribers or readers.
+	- The consumers subscribes to one or more topics and reads the messages in the order in which they were produced.
+	- the consumers keeps track of which messages it has already consumed by keeping track of the offset of messages.
+	- The offset is another bit of metadata - an integer value that continually increases - that kafka adds to each message as it is produced.
+	- Each message in the given partition has a unique offset.
+	- By storing the offset of the last consumed message for each partition, either in zookeeper or in kafka itself,
+		a consumer can stop and restart without losing the place.
+
+-- Brokers and Clusters
+	- A single kafka server is called a broker.
+	- The broker receives message from producers, assign offsets to them, and commits the message to storage on disk.
+	- Kafka brokers are designed to operate as part of a cluster.
+	- within a cluster of brokers one broker will also function as the cluster controller(elected automatically).
+	- The controller is responsible for administrative operations, including assigning partitions to brokers and monitoring for broker failures.
+	- A partition is owned by a single broker in the cluster, and that broker is called the leader of the partition.
+	- A partition may be assigned to multiple brokers, which will result in the partition being replicated.
+	- This provides redundancy of messages in the partition, such that another broker can take over leadership if there is a broker failure.
+	
+NOTE:	
+	- A key feature of Apache Kafka is that of retention, which is the durable storage of messages for some period of time.
+	- Kafka brokers are configured with a default retention setting for topics, either retaining messages for some period of time (e.g., 7 days)
+	  or until the topic reaches a certain size in bytes (e.g., 1 GB).
+	  
+-- Why Kafka ?
+	- There are many choices for publish/subscribe messaging systems, so what makes Apache Kafka a good choice?
+		
+		1) Multiple Producers
+			- Kafka is able to seamlessly handle multiple producers, whether those clients are using many topics or the same topic.
+			- This makes the system ideal for aggregating data from many frontend systems and making it consistent.
+
+		2) Multiple Consumers
+			- Kafka is designed for multiple consumers to read any single stream of messages without interfering with each other.
+			- This is in contrast to many queuing systems where once a message is consumed by one client, it is not available to any other.
+			- Multiple Kafka consumers can choose to operate as part of a group and share a stream, assuring that the entire group processes a given message only once.
+
+		3) Disk-Based Retention
+			- Not only can Kafka handle multiple consumers, but durable message retention means that consumers do not always need to work in real time.
+			- Messages are committed to disk, and will be stored with configurable retention rules.
+			- These options can be selected on a per-topic basis, allowing for different streams of messages to have different amounts of retention depending on the consumer needs.
+		
+		4) Scalable
+			- Kafka’s flexible scalability makes it easy to handle any amount of data.
+			- Expansions can be performed while the cluster is online, with no impact on the availability of the system as a whole.
+			- This also means that a cluster of multiple brokers can handle the failure of an individual broker, and continue servicing clients.
+
+		5) High Performance
+			- All of these features come together to make Apache Kafka a publish/subscribe messaging system with excellent performance under high load.
+			- Producers, consumers,and brokers can all be scaled out to handle very large message streams with ease.
 				
-			- Kafka follows publish/subscribe design pattern.
-			- Pub/sub systems often have a broker,a central point where messages are published.
-			- kafka is often described as a “distributed commit log” or more recently as a “distributing streaming platform.”
-			
-		- Topics and Partitions
-			- Messages in kafka are categorized into topics.
-			- The closest analogies for a topic is a folder in a filesystem.
-			- Topics are additionally broken down into a number of partitions.
-			- a partition is a single log.
-			- Messages are written to it in an append-only fashion, and are read in order from beginning to end.
 			
 			
+-- Zookeeper Ensemble 
+	- A zookeeper cluster is called an ensemble.
+	- Due to the alogorithm used, it is recommended that ensemble contains an odd number of servers.
+	- To configure Zookeeper servers in an ensemble, they must have a common configration that lists all servers, 
+		and each server needs a myid file in the data directory that specifies the ID number of the server.
+	- the configuration file might look like this:
+		---------------------------------------------
+		|	tickTime=2000							|
+		|	dataDir=/var/lib/zookeeper				|
+		|	clientPort=2181							|
+		|	initLimit=20							|
+		|	syncLimit=5								|
+		|	server.1=zoo1.example.com:2888:3888		|
+		|	server.2=zoo2.example.com:2888:3888		|
+		|	server.3=zoo3.example.com:2888:3888		|
+		---------------------------------------------											
 			
-		- Zookeeper Ensemble 
-			- A zookeeper cluster is called an ensemble.
-			- Due to the alogorithm used, it is recommended that ensemble contains an odd number of servers.
-			- To configure Zookeeper servers in an ensemble, they must have a common configration that lists all servers, 
-				and each server needs a myid file in the data directory that specifies the ID number of the server.
-			- the configuration file might look like this:
-				---------------------------------------------
-				|	tickTime=2000							|
-				|	dataDir=/var/lib/zookeeper				|
-				|	clientPort=2181							|
-				|	initLimit=20							|
-				|	syncLimit=5								|
-				|	server.1=zoo1.example.com:2888:3888		|
-				|	server.2=zoo2.example.com:2888:3888		|
-				|	server.3=zoo3.example.com:2888:3888		|
-				---------------------------------------------											
+			* initLimit --> is the amount of time to allow followers to connect with the leader.
+			* syncLimit --> The syncLimit value limits how out-of-sync followers can be with the leader.
+			* the configuration also lists each server in the ensemble.
+			* The servers are specified in the format server.X=hostname:peerPort:leaderPort
+				
+				where:
+					X => The id number of the server.
+					hostname => the hostname or IP address of the server.
+					peerPort => the TCP port over which servers in the ensemble communicate with each other.
+					leaderPort => The TCP port over which leader election is performed.
 					
-					* initLimit --> is the amount of time to allow followers to connect with the leader.
-					* syncLimit --> The syncLimit value limits how out-of-sync followers can be with the leader.
-					* the configuration also lists each server in the ensemble.
-					* The servers are specified in the format server.X=hostname:peerPort:leaderPort
-						
-						where:
-							X => The id number of the server.
-							hostname => the hostname or IP address of the server.
-							peerPort => the TCP port over which servers in the ensemble communicate with each other.
-							leaderPort => The TCP port over which leader election is performed.
-							
-				- Clients only need to be able to connect to the ensemble over the clientPort, but the members of the ensemble must be able to
-					communicate with each other over all the three ports.
-				- In addition to the shared configuration file, each server must have a file in the data directory with the name myid.
-				- The file must contain the ID number of the server, which must match the configuration file.
+		- Clients only need to be able to connect to the ensemble over the clientPort, but the members of the ensemble must be able to
+			communicate with each other over all the three ports.
+		- In addition to the shared configuration file, each server must have a file in the data directory with the name myid.
+		- The file must contain the ID number of the server, which must match the configuration file.
+				
 					
-					
-		- Installing and running the kafka broker.
-			- To run the kafka broker
-				- /bin/kafka-server-start.sh conf/server.properties
+-- Installing and running the kafka broker.
+	- To run the kafka broker
+		- /bin/kafka-server-start.sh conf/server.properties
+	
+	- Create and verify a topic
+		kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+	
+	- Produce messages to test a topic
+		kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test
+			Test Message 1
+			Test Message 2
+	
+	- Consumers messages from a test topic 
+		kafka/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning
+											(or) 
+		kafka/bin/kafka-console-consumer.sh	--bootstrap-server localhost:9092 --topic test --from-beginning (New API)
+			Test Message 1
+			Test MEssage 2
+
+	-Some of the important broker-configurations are
+		1) broker.id : Every Kafka broker must have an integer identifier, which is set using the broker.id configuration.
+		2) port	: The example configuration file starts Kafka with a listener on TCP port 9092. this can be set to any available port by changing the port configuration parameter.	
+		3) zookeeper.connect : The location of the Zookeeper used for storing the broker metadata is set using the zookeeper.connect configuration parameter.
+		4) log.dirs : Kafka persists all messages to disk, and these log segments are stored in the directories specified in the log.dirs configuration.
+					  This is a comma-separated list of paths on the local system. If more than one path is specified, the broker will store partitions on
+					  them in a “least-used” fashion with one partition’s log segments stored within the same path. 	 		
+		5) num.recovery.threads.per.data.dir : Kafka uses a configurable pool of threads for handling log segments. Currently, this thread pool is used:
+			• When starting normally, to open each partition’s log segments
+			• When starting after a failure, to check and truncate each partition’s log segments
+			• When shutting down, to cleanly close log segments
+		6) auto.create.topics.enable : The default Kafka configuration specifies that the broker should automatically create a topic under the following circumstances:
+			• When a producer starts writing messages to the topic
+			• When a consumer starts reading messages from the topic
+			• When any client requests metadata for the topic
+			-you can set the auto.create.topics.enable configuration to false.
+		
+	Topic Defaults	:
+			The Kafka server configuration specifies many default configurations for topics that are created.	
+		7) num.partitions : The num.partitions parameter determines how many partitions a new topic is created with, 
+			primarily when automatic topic creation is enabled.This parameter defaults to one partition.
+				- partitions are the way a topic is scaled within a Kafka cluster.
+		8) log.retention.ms : The most common configuration for how long Kafka will retain messages is by time.
+						   - The default is specified in the configuration file using the log.retention.hours parameter, and it is set to 168 hours, or one week.
+		9) log.retention.bytes : Another way to expire messages is based on the total number of bytes of messages retained.
+							- This value is set using the log.retention.bytes parameter, and it is applied per-partition.	
+		10) log.segment.bytes : Once the log segment has reached the size specified by the log.segment.bytes parameter, which defaults to 1 GB, the log segment
+							is closed and a new one is opened.Once a log segment has been closed, it can be considered for expiration.
+		11) message.max.bytes : The Kafka broker limits the maximum size of a message that can be produced, configured by the message.max.bytes parameter, 
+								which defaults to 1000000, or 1 MB.A producer that tries to send a message larger than this will receive an error back from
+								the broker, and the message will not be accepted.
 			
-			- Create and verify a topic
-				kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
-			
-			- Produce messages to test a topic
-				kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test
-					Test Message 1
-					Test Message 2
-			
-			- Consumers messages from a test topic 
-				kafka/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning
-													(or) 
-				kafka/bin/kafka-console-consumer.sh	--bootstrap-server localhost:9092 --topic test --from-beginning (New API)
-					Test Message 1
-					Test MEssage 2
-					
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
+-- Kafka Clusters	
+	there are significant benefits to having multiple brokers configured as a cluster	
+		- The biggest benefit is the ability to scale the load across multiple servers.
+		- A close second is using replication to guard against data loss due to single system failures.
 			
 			
-			
-			
+-- Kafka Producers: Writing Messages to Kafka			
+				
 			
 			
 			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+
+		
