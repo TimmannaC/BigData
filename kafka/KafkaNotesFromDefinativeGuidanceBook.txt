@@ -18,17 +18,11 @@ why kafka	?
 	- Pub/sub systems often have a broker,a central point where messages are published.
 	- kafka is often described as a “distributed commit log” or more recently as a “distributing streaming platform.”
 	
-- Topics and Partitions
-	- Messages in kafka are categorized into topics.
-	- The closest analogies for a topic is a folder in a filesystem.
-	- Topics are additionally broken down into a number of partitions.
-	- a partition is a single log.
-	- Messages are written to it in an append-only fashion, and are read in order from beginning to end.
-			
 -- Topics & Partitions
 	- Messages in kafka are categorized into topics.
 	- the closest analogies for a topic is a folder in filesystem.
 	- Topics are additionally broken down into a number of partitions.
+	- Messages are written to it in an append-only fashion, and are read in order from beginning to end.
 	- each partition ca be hosted on a different server, means single topic can be scaled horizontally across multiple servers to provide performance.
 
 -- Producers & Consumers
