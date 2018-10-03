@@ -170,7 +170,191 @@ NOTE:
 		- A close second is using replication to guard against data loss due to single system failures.
 			
 			
--- Kafka Producers: Writing Messages to Kafka			
+-- Kafka Producers: Writing Messages to Kafka	
+	- We start producing messages to kafka by creating a producerRecord, which must include the topic we want to send the record to and a value.
+	- Optionally, we can also specify a key and/or a partition.
+	- Once we send the ProducerRecord , the first thing the producer will do is serialize the key and value objects to ByteArrays so they can be
+		sent over the network.
+	- Next, the data is sent to a partitioner.
+	- If we specified a partition in the ProducerRecord , the partitioner doesn’t do anything and simply returns the partition we specified.
+	- If we didn’t, the partitioner will choose a partition for us, usually based on the ProducerRecord key.
+	- Once a partition is selected, the producer knows which topic and partition the record will go to.
+	- It then adds the record to a batch of records that will also be sent to the same topic and partition.
+	- A separate thread is responsible for sending those batches of records to the appropriate Kafka brokers.
+	- When the broker receives the messages, it sends back a response.
+	- If the messages were successfully written to Kafka, it will return a RecordMetadata object with the topic, partition, and the offset of the 
+		record within the partition.
+	- If broker failed to write the messages it returns an error when producer receives an error, it may retry sending messages a few more times.
+	
+	-- Contructing a kafka producer.
+		1) The first step in writing messages to Kafka is to create a producer object with the properties you want to pass to the producer.
+		- A kafka producer has 3 mandatory properties.
+			
+			1) bootstrap.servers
+				- List of host:port pairs of brokers that the producer will use to establish connection to the kafka cluster.
+				- This list doesn’t need to include all brokers, since the producer will get more information after the initial connection.
+				- But it is recommended to include at least two, so in case one broker goes down, the producer will still be able to connect to the cluster.
+			
+			2) key.serializer
+				- Name of a class that will be used to serialize the keys of the records we will produce to Kafka.
+				- Kafka brokers expect byte arrays as keys and values of messages.
+				- key.serializer should be set to a name of a class that implements the org.apache.kafka.common.serialization.Serializer interface.
+				- The kafka client package includes ByteArraySerializer,StringSerializer , and IntegerSerializer, if we want to use other then these
+					we have to use implement the our class.
+				- NOTE : Setting key.serializer is required even if you intend to send only values.
+			
+			3) value.serializer
+				- Name of a class that will be used to serialize the values of the records we will produce to Kafka.
+	
+		- The following code snippet shows how to create a new producer by setting just the mandatory parameters and using defaults for everything else:
+			
+			---------------------------------------------------------------------------------------------------------
+			|	 private Properties kafkaProps = new Properties();		--(1)										|
+			|	 kafkaProps.put("bootstrap.servers","broker1:9092,broker2:9092");									|
+			|	 kafkaProps.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer"); --(2)	|
+			|	 kafkaProps.put("value.serializer","org.apache.kafka.common.serialization.StringSerializer");		|
+			|	 																									|		
+			|	 producer = new KafkaProducer<String.String>(kafkaProps);  ---(3)									|
+			|																										|
+			---------------------------------------------------------------------------------------------------------
+			
+			(1) We start with a Properties object.
+			(2) Since we plan on using strings for message key and value, we use the built-in StringSerializer.
+			(3) Here we create a new producer by setting the appropriate key and value types and passing the Properties object.
+	
+		-- Once we instantiate a producer, it is time to start sending messages. There are three Once we instantiate a producer, it is time to start sending messages.There are three
+			
+			1) Fire-and-forget
+				- We send a message to the server and don’t really care if it arrives succesfully or not.
+				- Most of the time, it will arrive successfully, since Kafka is highly available and the producer will retry sending messages automatically.
+				- However, some messages will get lost using this method.
+			
+			2) Synchronous send
+				- We send a message, the send() method returns a Future object, and we use get() to wait on the future and see if the send() was successful or not.
+			
+			3) Asynchronous send
+				- We call the send() method with a callback function, which gets triggered when it receives a response from the Kafka broker.
+	
+		
+	-- Sending a Message to Kafka
+		The simplest way to send a message is as follows:			
+				(2) We use the producer object send() method to send the producerRecord. The send() method returns a Java Future object with RecordMetadata , 
+					but since we simply ignore the returned value, we have no way of knowing whether the message was sent successfully or not.
+				-------------------------------------------------------------------------------------------------------------------------
+				|																														|
+				|	ProducerRecord<String,String> record = new ProducerRecord<>("CustomerCountry","Precision Products","France"); --(1)	|
+				|																														|
+				|	try{																												|
+				|			producer.send(record); --(2)																				|				
+				|	   } catch(Exception e){																							|				
+				|			e.printStackTrace(); --(3)																					|	
+				|	   }																												|
+				-------------------------------------------------------------------------------------------------------------------------
+				
+	-- Sending a Message Synchronously
+		The simplest way to send a message synchronously is as follows:
+				-------------------------------------------------------------------------------------------------------------------------
+				|																														|
+				|	ProducerRecord<String,String> record = new ProducerRecord<>("CustomerCountry","Precision Products","France");		|
+				|																														|
+				|	try{																												|
+				|			producer.send(record).get();--(1)																			|				
+				|	   } catch(Exception e){																							|				
+				|			e.printStackTrace(); --(2)																					|	
+				|	   }																												|
+				-------------------------------------------------------------------------------------------------------------------------			
+	
+				(1) -- Here, we are using Future.get() to wait for a reply from kafka. This method will through an exception if the record
+						is not send successfully to kafka.If there were no errors, we will get a RecordMetadata object that we can use to 
+						retrieve the offset the message was written to.
+				(2) -- If there were any errors before sending data to Kafka, while sending, if the Kafka brokers returned a nonretriable exceptions 
+						or if we exhausted the available retries, we will encounter an exception.		
+				
+					
+												KafkaProducer has two types of errors.	
+																|	
+																|	
+							----------------------------------------------------------------------------
+							|																			|	
+					Retriable errors															Retriable exception
+		1) a connection error can be resolved because the 									1)“message size too large.”
+			connection may get reestablished.	
+		2) A “no leader” error can be resolved when a
+			new leader is elected for the partition.	
+					
+					
+					
+	-- Sending a Message Asynchronously
+		- we do need to know when we failed to send a message completely so we can throw an exception, log an error, or 
+			perhaps write the message to an “errors” file for later analysis.
+		- In order to send messages asynchronously and still handle error scenarios, the producer supports adding a callback when sending a record.			
+		
+				-------------------------------------------------------------------------------------------------------------------------
+				|																														|		
+				|	private class DemoProducerCallback implements Callback { --(1)														|		
+				|			@Override																									|		
+				|		public void onCompletion(RecordMetadata recordMetadata, Exception e) {											|							
+				|			if(e != null){																								|		
+				|				e.printStackTrace(); --(2)																				|						
+				|				}																										|		
+				|			}																											|		
+				|		}  																												|
+				|																														|		
+				|	ProducerRecord<String, String> record = new ProducerRecord<>("CustomerCountry", "Biomedical Materials", "USA");--(3)|		
+				|	producer.send(record,new DemoProducerCallback()); --(4)																|		
+				|																														|		
+				-------------------------------------------------------------------------------------------------------------------------
+						
+			(1) To use callbacks, you need a class that implements the org.apache.kafka.clients.producer.Callback interface,
+					which has a single function -- onCompletion()
+			(2) If Kafka returned an error, onCompletion() will have a nonnull exception. Here we “handle” it by printing
+			(4) we pass a Callback object along when sending the record.		
+				
+				
+	-- Serializers				
+		- producer configuration includes mandatory serializers.			
+		- Kafka includes serializers for String,integers and ByteArrays , but this does not cover most use cases. Eventually, you will
+			want to be able to serialize more generic records.			
+		- We will start by showing how to write your own serializer and then introduce the Avro serializer as a recommended alternative.	
+					
+	-- Custom Serializers
+		- When the object you need to send to Kafka is not a simple string or integer, you have a choice of either using a generic serialization
+			library like Avro, Thrift, or Protobuf to create records, or creating a custom serialization for objects you are already using.
+		- It is really painfull to write the custom serializers and maintain them so better to use existing generic serializers like
+			json,Apache Avro,Thrift or Protobuf.
+		
+	-- Serializing Using Apache Avro
+		- Apache Avro is a language-neutral data serialization format.
+		- The schema is usually described in JSON and the serialization is usually to binary files, although serializing to JSON is also supported.
+		- Avro assumes that the schema is present when reading and writing files, usually by embedding the schema in the files themselves.					
+					
+		- Using Avro Records with Kafka
+			- Unlike Avro files, where storing the entire schema in the data file is associated with a fairly reasonable overhead, 
+				storing the entire schema in each record will usually more than double the record size.
+			- However, Avro still requires the entire schema to be present when reading the record, so we need to locate the schema elsewhere.		
+			- To achieve this, we follow a common architecture pattern and use a Schema Registry.		
+			- The Schema Registry is not part of Apache Kafka but there are several open source options to choose from. 
+			- We’ll use the Confluent Schema Registry for this example.		
+			- The idea is to store all the schemas used to write data to Kafka in the registry.
+			- Then we simply store the identifier for the schema in the record we produce to Kafka.
+			- The consumers can then use the identifier to pull the record out of the schema registry and deserialize the data.
+	 		- The key is that all this work—storing the schema in the registry and pulling it up when required—is done in the serializers and deserializers.
+	
+	
+			  |-----------------|						____________						____________________	
+			  |		Producer	|	Messages with	   |			|						|		Consumer	|
+			  |	______________	|	schema ID		   |	kafka	|						|					|	
+			  |	| Serializer | 	|--------------------->|	broker	|---------------------->|	_______________ |
+			  |	|____________|	|					   |			|						|	| Deserializer ||
+			  |					|					   |____________|						|	|______________||
+			  |-----------------|															|___________________|
+					   |								______________								  |
+					   |	Current version			   |              |								  |
+					   |	of schema				   |	Schema	  |								  |	
+					   |_______________________________|	Registry  |_______________________________|	
+													   |			  |	
+													   |______________|	
+			
 				
 			
 			
