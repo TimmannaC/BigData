@@ -101,49 +101,45 @@ NOTE:
 			* the configuration also lists each server in the ensemble.
 			* The servers are specified in the format server.X=hostname:peerPort:leaderPort
 				
-				where:
-					X => The id number of the server.
-					hostname => the hostname or IP address of the server.
-					peerPort => the TCP port over which servers in the ensemble communicate with each other.
-					leaderPort => The TCP port over which leader election is performed.
+			where:
+				X => The id number of the server.
+				hostname => the hostname or IP address of the server.
+				peerPort => the TCP port over which servers in the ensemble communicate with each other.
+				leaderPort => The TCP port over which leader election is performed.
 					
-		- Clients only need to be able to connect to the ensemble over the clientPort, but the members of the ensemble must be able to
-			communicate with each other over all the three ports.
-		- In addition to the shared configuration file, each server must have a file in the data directory with the name myid.
+		- Clients only need to be able to connect to the ensemble over the clientPort, but the members of the 				ensemble must be able to communicate with each other over all the three ports.
+		- In addition to the shared configuration file, each server must have a file in the data directory with the 			name myid.
 		- The file must contain the ID number of the server, which must match the configuration file.
 				
 					
 -- Installing and running the kafka broker.
-	- To run the kafka broker
-		- /bin/kafka-server-start.sh conf/server.properties
+     - To run the kafka broker
+	- /bin/kafka-server-start.sh conf/server.properties
 	
-	- Create and verify a topic
-		kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+     - Create and verify a topic
+	kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
 	
-	- Produce messages to test a topic
+     - Produce messages to test a topic
 		kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test
 			Test Message 1
 			Test Message 2
 	
-	- Consumers messages from a test topic 
-		kafka/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning
-											(or) 
-		kafka/bin/kafka-console-consumer.sh	--bootstrap-server localhost:9092 --topic test --from-beginning (New API)
+     - Consumers messages from a test topic 
+	kafka/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning									(or) 
+	kafka/bin/kafka-console-consumer.sh	--bootstrap-server localhost:9092 --topic test --from-beginning (New API)
 			Test Message 1
 			Test MEssage 2
 
-	-Some of the important broker-configurations are
-		1) broker.id : Every Kafka broker must have an integer identifier, which is set using the broker.id configuration.
-		2) port	: The example configuration file starts Kafka with a listener on TCP port 9092. this can be set to any available port by changing the port configuration parameter.	
-		3) zookeeper.connect : The location of the Zookeeper used for storing the broker metadata is set using the zookeeper.connect configuration parameter.
-		4) log.dirs : Kafka persists all messages to disk, and these log segments are stored in the directories specified in the log.dirs configuration.
-					  This is a comma-separated list of paths on the local system. If more than one path is specified, the broker will store partitions on
-					  them in a “least-used” fashion with one partition’s log segments stored within the same path. 	 		
-		5) num.recovery.threads.per.data.dir : Kafka uses a configurable pool of threads for handling log segments. Currently, this thread pool is used:
-			• When starting normally, to open each partition’s log segments
-			• When starting after a failure, to check and truncate each partition’s log segments
-			• When shutting down, to cleanly close log segments
-		6) auto.create.topics.enable : The default Kafka configuration specifies that the broker should automatically create a topic under the following circumstances:
+      -Some of the important broker-configurations are
+	1) broker.id : Every Kafka broker must have an integer identifier, which is set using the broker.id configuration.
+	2) port	: The example configuration file starts Kafka with a listener on TCP port 9092. this can be set to any 			  available port by changing the port configuration parameter.	
+	3) zookeeper.connect : The location of the Zookeeper used for storing the broker metadata is set using the 					zookeeper.connect configuration parameter.
+	4) log.dirs : Kafka persists all messages to disk, and these log segments are stored in the directories specified in 				the log.dirs configuration.This is a comma-separated list of paths on the local system. If more 			    than one path is specified,the broker will store partitions on them in a “least-used” fashion 				with one partition’s log segments stored within the same path. 	 		
+	5) num.recovery.threads.per.data.dir : Kafka uses a configurable pool of threads for handling log segments. 				Currently, this thread pool is used:
+			   • When starting normally, to open each partition’s log segments
+			   • When starting after a failure, to check and truncate each partition’s log segments
+			   • When shutting down, to cleanly close log segments
+	6) auto.create.topics.enable : The default Kafka configuration specifies that the broker should automatically create 			a topic under the following circumstances:
 			• When a producer starts writing messages to the topic
 			• When a consumer starts reading messages from the topic
 			• When any client requests metadata for the topic
@@ -208,13 +204,13 @@ NOTE:
 	
 		- The following code snippet shows how to create a new producer by setting just the mandatory parameters and using defaults for everything else:
 			
-			---------------------------------------------------------------------------------------------------------
-			|	 private Properties kafkaProps = new Properties();		--(1)										|
-			|	 kafkaProps.put("bootstrap.servers","broker1:9092,broker2:9092");									|
-			|	 kafkaProps.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer"); --(2)	|
-			|	 kafkaProps.put("value.serializer","org.apache.kafka.common.serialization.StringSerializer");		|
-			|	 																									|		
-			|	 producer = new KafkaProducer<String.String>(kafkaProps);  ---(3)									|
+		---------------------------------------------------------------------------------------------------------
+		|	 private Properties kafkaProps = new Properties();		--(1)		             	|
+		|	 kafkaProps.put("bootstrap.servers","broker1:9092,broker2:9092");				|
+		|	 kafkaProps.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer");--(2)|
+		|	 kafkaProps.put("value.serializer","org.apache.kafka.common.serialization.StringSerializer");	|
+		|	 												
+		|	 producer = new KafkaProducer<String.String>(kafkaProps);  ---(3)									|
 			|																										|
 			---------------------------------------------------------------------------------------------------------
 			
