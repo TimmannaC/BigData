@@ -384,27 +384,27 @@ NOTE:
 
 	-- Implementing a custom partitioning strategy
 		- Example of a custom partitioner:
-		__________________________________________________________________
-		| 	import org.apache.kafka.clients.producer.Partitioner;		  |	
-		|	import org.apache.kafka.common.Cluster;						  | 	
-		|	import org.apache.kafka.common.PartitionInfo;				  |	
-		|	import org.apache.kafka.common.record.InvalidRecordException; |
-		|	import org.apache.kafka.common.utils.Utils;					  |	
-		|																  |	
-		|	public class Customer implements Partitioner {				  |
-		|																  |	
-		|		@Override                                                 |
-		|		public void configure(Map<String, ?> configs) {} - (1)    |
-		|																  |
-		|		@Override												  |	
-		|   	public int partition(String s, Object key, byte[] bytes,  |
-		|					Object o1, byte[] bytes1, Cluster cluster) {} |
-		|																  |					
-		|   	@Override												  |	
-		|   	public void close() {}									  |
-		|																  |	
-		|	}															  |	
-		|_________________________________________________________________|
+		________________________________________________________________________
+		| 	import org.apache.kafka.clients.producer.Partitioner;		 	    |
+		|	import org.apache.kafka.common.Cluster;					     		| 	
+		|	import org.apache.kafka.common.PartitionInfo;				      	|	
+		|	import org.apache.kafka.common.record.InvalidRecordException; 	    |
+		|	import org.apache.kafka.common.utils.Utils;				      		|	
+		|							     	             	      				|			
+		|	public class Customer implements Partitioner {				      	|
+		|										      							|							 
+		|		@Override                                                       |
+		|		public void configure(Map<String, ?> configs) {} - (1)          |
+		|										      							|
+		|		@Override							      						|	
+		|   	public int partition(String s, Object key, byte[] bytes,        |
+		|					Object o1, byte[] bytes1, Cluster cluster) {} 		|
+		|							  			      							|					
+		|   	@Override								      					|	
+		|   	public void close() {}							      			|
+		|										      							|	
+		|	}				                                              		|	
+		|_______________________________________________________________________|
 
 		NOTE: 
 			1) Partitioner interface includes configure, partition, and close methods.
@@ -476,4 +476,107 @@ NOTE:
 			- Each consumer only sees his own assignment the leader is the only client process that has the full list of
 				consumers in the group and their assignments.	
 			- This process repeats every time a rebalance happens.
+			
+		-- Creating a Kafka Consumer
+			- The first step to start consuming records is to create a KafkaConsumer instance.
+			- To start we just need to use the three mandatory properties: bootstrap.servers , key.deserializer , and value.deserializer.
+			- The first property, bootstrap.servers , is the connection string to a Kafka cluster.
+			- The other two properties, key.deserializer and value.deserializer ,are similar to the serializers defined for 
+				the producer, but rather than specifying classes that turn Java objects to byte arrays, you need to 
+				specify classes that can take a byte array and turn it into a Java object.
+			- There is a fourth property, which is not strictly mandatory, The property is group.id and it specifies the consumer group the
+				KafkaConsumer instance belongs to.
+			
+			- The following code snippet shows how to create a KafkaConsumer :
+			___________________________________________________________________________
+			|																		  |	
+			|	Properties props = new Properties();								  |
+			|	props.put("bootstrap.servers", "broker1:9092,broker2:9092");		  |
+			|	props.put("group.id", "CountryCounter");			 				  | 
+			|	props.put("key.deserializer",					  					  |
+			|	"org.apache.kafka.common.serialization.StringDeserializer"); 	      |
+			|	props.put("value.deserializer",					  					  |
+			|	"org.apache.kafka.common.serialization.StringDeserializer");	      |
+			|	KafkaConsumer<String, String> consumer = new KafkaConsumer<String,    |
+			|	String>(props);							  							  |
+			|_________________________________________________________________________|
+			
+			
+			- Subscribing to Topics
+				-	Once we create a consumer, the next step is to subscribe to one or more topics. 
+				-	The subcribe() method takes a list of topics as a parameter, so it’s pretty simple to use:
+					
+					consumer.subscribe(Collections.singletonList("customerCountries"));
+					
+				- Here we simply create a list with a single element: the topic name customerCountries.
+				- It is also possible to call subscribe with a regular expression.
+				- This is useful for applications that need to consume from multiple topics and can handle 
+					the different types of data the topics will contain.
+					
+				- To subscribe to all test topics, we can call:
+						consumer.subscribe("test.*");	
+			
+			-- The Poll Loop
+				- At the heart of the consumer API is a simple loop for polling the server for more data.
+				- Once the consumer subscribes to topics, the poll loop handles all details of coordination, partition rebalances, 
+					heartbeats, and data fetching, leaving the developer with a clean API that simply returns available data from 
+					the assigned partitions.
+				- The main body of a consumer will look as follows:
+				_______________________________________________________________________________
+					try {
+						while (true) {   --(1)
+							ConsumerRecords<String, String> records = consumer.poll(100); --(2)
+							for (ConsumerRecord<String, String> record : records)    --(3)
+							{
+								log.debug("topic = %s, partition = %s, offset = %d,
+								customer = %s, country = %s\n",
+								record.topic(), record.partition(), record.offset(),
+								record.key(), record.value());
+								int updatedCount = 1;
+								if (custCountryMap.countainsValue(record.value())) {
+								updatedCount = custCountryMap.get(record.value()) + 1;
+								}
+								custCountryMap.put(record.value(), updatedCount)
+								JSONObject json = new JSONObject(custCountryMap);
+								System.out.println(json.toString(4))	--(4)
+							}
+						}
+					} finally {
+					consumer.close();  --(5)
+					}
+				________________________________________________________________________________
+			
+			
+			explaination:
+				1) This is indeed an infinite loop. Consumers are usually long-running applications
+					that continuously poll Kafka for more data.
+				2) This is the most important line in the chapter.consumers must keep polling Kafka or they will be 
+					considered dead and the partitions they are consuming will be handed to another consumer in the 
+					group to continue consuming.The parameter we pass, poll() ,is a timeout interval and controls how 
+					long poll() will block if data is not available in the consumer buffer.
+				3) poll() returns a list of records. Each record contains the topic and partition the record came from, 
+					the offset of the record within the partition, and of course the key and the value of the record.
+				5) Always close() the consumer before exiting. This will close the network connections and sockets. 
+					It will also trigger a rebalance immediately rather than wait for the group coordinator to discover 
+					that the consumer stopped sending heartbeats and is likely dead, which will take longer and therefore 
+					result in a longer period of time in which consumers can’t consume messages from a subset of the partitions.
+			
+			NOTE:
+				- The poll loop does a lot more than just get data. 
+				- The first time you call poll() with a new consumer, it is responsible for finding the GroupCoordinator,joining the 
+				  consumer group, and receiving a partition assignment. 
+				- If a rebalance is triggered, it will be handled inside the poll loop as well. And of course the heartbeats 
+				  that keep consumers alive are sent from within the poll loop. For this reason, we try to make sure
+					that whatever processing we do between iterations is fast and efficient.
+			
+			-- Thread Safety
+				- You can’t have multiple consumers that belong to the same group in one thread and you can’t have multiple 
+					threads safely use the same consumer.
+				- One consumer per thread is the rule. To run multiple consumers in the same group in one application, 
+					you will need to run each in its own thread.
+				- It is useful to wrap the consumer logic in its own object and then use Java’s ExecutorService
+					to start multiple threads each with its own consumer.
+				- for example refer->https://www.confluent.io/blog/tutorial-getting-started-with-the-new-apache-kafka-0-9-consumer-client/
+			
+			
 			
