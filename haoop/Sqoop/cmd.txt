@@ -6,3 +6,47 @@ sqoop import
 --connect jdbc:mysql://localhost/nav  --username root --password manager --table movies 
 --m 1 
 --target-dir /movie1
+
+
+SQOOP
+=====
+- we know that Apache Flume is a data ingestion tool for unstructured sources.
+- but organisations store their operational data in relational databases.
+- Sqoop is a command line tool used to transfer data from relational database to hadoop.
+- Uses MapReduce to actually import the data
+	- uses 4 mappers by default.
+- Sqoop supports where clause.
+
+This is how Sqoop got its name – “SQL to Hadoop & Hadoop to SQL”.
+
+- The major difference between Flume and Sqoop is that:
+	- Flume only ingests unstructured data or semi-structured data into HDFS.
+	- While Sqoop can import as well as export structured data from RDBMS or 
+		Enterprise data warehouses to HDFS or vice versa.
+
+- Sqoop IMPORT
+	- sqoop import --connnect jdbc:mysql://localhost/employees --username demo --password demo --table temp
+					--m 1 --target-dir /employees
+					
+Sqoop – IMPORT Command with Where Clause
+	- sqoop import --connnect jdbc:mysql://localhost/employees --username demo --password demo --table temp
+					--m 1 --where "emp_no &gt; 39000" --target-dir /employees 
+
+Sqoop – Incremental Import :
+	- sqoop import --connect jdbc:mysql://localhost/employees --usename demo --password demo --table temp
+					--m 3  --target-dir /employees --incremental append --check-column emp_no --last-value 49999
+					
+Sqoop – Import All Tables :
+	- sqoop import-all-tables --connect jdbc:mysql://localhost/employees --username demo --password demo
+
+Sqoop – List Databases :
+	- sqoop list-databases --connect jdbc:mysql://localhost/employees --username demo --password demo
+	
+Sqoop – List Tables : 
+	- sqoop list-tables --connect jdbc:mysql://localhost/employees --username demo
+	
+Sqoop – Export	:
+	- first we need to create the table manually in the database.
+	- sqoop export --connnect jdbc:mysql://localhost/employees --username demo --table temp 
+		--export-dir /user/<username>/employees
+	
