@@ -1,0 +1,24 @@
+
+# dataTypes in  postgres.
+  numerics    :   int,long,float
+  string      :   varchar
+
+Note : Each query should end with an semicolon.
+
+
+1) select postgres user
+  - sudo su postgres
+  - psql
+
+2) Connnect to the required database.
+  - \c databaseName
+  
+3) Creating table.
+  - CREATE TABLE temp(name varchar,age int);
+  - \dt ->  to verify the creation of table.
+
+4) Inserting the row.
+  - INSERT INTO temp VALUES('jackSparrow',30);
+
+5) Retriving the data.
+  - SELECT *FROM temp;
