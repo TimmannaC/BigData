@@ -13,6 +13,21 @@ pig or pig -x MAPREDUCE
 #To exit from grunt shell 
 quit
 
+- Apache pig is a platform for data analysis and processing on Hadoop.
+  - it offers an alternative to MapReduce.
+  
+- Main Components of Pig.
+	- It is a DataFlow language.
+	- It has an interactive shell(Pig Grunt).
+	- It has an Pig Interpreter and Execution Engine.
+	
+- A single Element of data is called as a Field.
+	eg : name,city,age
+- A collection of values is called as a tuple.
+	eg : (name,city,age)
+- A collection of tuples is called a bag.
+	- tuples within a bag are unordered by default.
+
 
 # Load and Store functions.
 
@@ -50,6 +65,23 @@ ls,cat,mkdir,rm,cd
 
 
 
+test.txt => alice	2391	AM
+			Bob		2187	IN
+			Charlie	872		Eng
+			Bob		9821	UAE
+
+
+// Reading the files from pig
+grunt> sales = LOAD 'test.txt' USING PigStorage('\t') AS (name:chararray,price:int,country:chararray);
+// creating new Bag with sales > 999
+grunt> bigsales = FILTER sales BY price > 999;
+// creating the new big with filter data sorted by price desc.
+grunt> sortedBigSales = SORT bigsales BY price DESC;
+// Output Data Stored in new file.
+grunt> sortedBigSales INTO 'topsales.txt';
+
+// TO display the bag content use dump
+grunt> dump sales;
 
 
 
