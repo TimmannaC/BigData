@@ -1,0 +1,222 @@
+
+Machine learning
+
+divided into 3 categories
+	1) 	Supervised learning
+	2)	Unsupervised learning
+	3)	Reinforcement learning
+	
+
+Supervised learning 
+ - train the machine using data which is well labeled that means some data is already tagged with correct answer.
+ - used when we have an historic data.
+ - when we can predict the output
+	Classification (o/p is some category)
+		- Fraud detection.
+		- Email spam detection.
+		- Image Classification.
+	Regression (o/p is some real value)
+		- Weather Forecasting.
+		- Risk Assessment.
+		- Score Prediction.
+		
+Unsupervised learning.
+ - Unsupervised learning is the training of machine using information that is neither classified nor labeled and 
+   allowing the algorithm to act on that information without guidance.
+ - used when we do not have an historic data.
+ - when we can't predict the output
+	Association
+		- An association rule learning problem is where you want to discover rules that describe large portions of 
+		  your data, such as people that buy X also tend to buy Y.
+		- Market Basket Analysis.
+		- Text Mining
+		- Face Recognition.
+	Clustering
+		- A clustering problem is where you want to discover the inherent groupings in the data,such as grouping customers by purchasing behavior.
+		- Medical Research.
+		- City Planning.
+		- Targeted Marketing. 
+
+Reinforcement Learning(recently developed)
+ - learned from scratch
+	- Gaming.
+	- Robot Navigation.
+	- stock Trading.
+	- Assembly line processes.
+	
+- Alogrithms
+ - Supervised Algorithm's
+	1) linear Regression.
+   		- is a linear modelling approach to find relationship between one or more independent variables(predictors)
+    		 denoted as X and dependent variables (target) denoted as Y.
+	 
+
+
+
+
+ML pipeline
+
+				transformers &							Estimators & 					
+				Estimators								   Models
+				
+ preprocessing 
+ cleaning & feature	--> clean & structured --> Modeling &	--> pipeline cross
+ engineering									analytical 			validation
+												techniques
+
+
+
+ - structural types for building pipelines
+	Transformers :
+		- Transformers are functions that convert raw data in some way.
+		- This might be to create a new interaction variable (from two other variables), normalize a column, or simply change an Integer
+			into a Double type to be input into a model.
+		- An example of a transformer is one that converts string
+			categorical variables into numerical values that can be used in MLlib.
+		- Transformers are primarily used in preprocessing and feature engineering.
+		- Transformers take a DataFrame as input and produce a new DataFrame as output
+	Estimators :
+		- estimators can be a kind of transformer that is initialized with data.
+	evaluator : 
+		- allows us to see how a given model performs according to criteria we specify like a receiver operating characteristic (ROC) curve.
+ 
+
+ - Low-level data types
+ 	- there are also several lower-level data types you may need to work with in MLlib (Vector being the most common).
+	- Whenever we pass a set of features into a machine learning model, we must do it as a vector that consists of Doubles.	
+	- This vector can be either sparse (where most of the elements are zero) or dense (where there are many unique values).
+	- Vectors are created in different ways.
+		- To create a dense vector, we can specify an array of all the values.
+		- To create a sparse vector, we can specify the total size and the indices and values of the non-zero elements.
+
+		eg : 
+			from pyspark.ml.linalg import Vectors
+			denseVec = Vectors.dense(1.0, 2.0, 3.0)
+			size = 3
+			idx = [1, 2] # locations of non-zero elements in vector
+			values = [2.0, 3.0]
+			sparseVec = Vectors.sparse(size, idx, values)
+
+ - Feature Engineering with Transformers
+	- transformers help us manipulate our current columns in one way or another.
+	- Manipulating these columns is often in pursuit of building features (that we will input into our model).
+	- Transformers exist to either cut down the number of features, add more features, manipulate current ones, or simply to help us format our data correctly.
+	- Transformers add new columns to DataFrames.
+	- When we use MLlib, all inputs to machine learning algorithms in Spark must consist of type Double (for labels) and Vector[Double] (for features).
+	
+	# in Python
+	df = spark.read.json("/data/simple-ml")
+	df.orderBy("value2").show()
+
+	Here’s a sample of the data:
+	+-----+----+------+------------------+
+	|color| lab|value1|		value2		 |	
+	+-----+----+------+------------------+
+	|green|good|  1   |14.386294994851129|
+	| red | bad|  16  |14.386294994851129|
+	|green|good|  12  |14.386294994851129|
+	+-----+----+------+------------------+
+
+
+	- To achieve this in our example, we are going to specify an RFormula.
+		- The basic RFormula operators are:
+			- ~ -> Separate target and terms
+			- + -> Concat terms; “+ 0” means removing the intercept (this means that the y-intercept of the line that we will fit will be 0)
+			- - -> Remove a term; “- 1” means removing the intercept (this means that the y-intercept of the line that we will fit will be 0—yes, 
+					this does the same thing as “+ 0”
+			- : -> Interaction (multiplication for numeric values, or binarized categorical values)
+			- . -> All columns except the target/dependent variable
+
+
+	- In order to specify transformations with this syntax, we need to import the relevant class.
+	- Then we go through the process of defining our formula.
+	- In this case we want to use all available variables (the .) and also add in the interactions between value1 and color and value2 and color,
+	  treating those as new features:
+	
+	# in Python
+	from pyspark.ml.feature import RFormula
+	supervised = RFormula(formula="lab ~ . + color:value1 + color:value2")
+
+	- At this point, we have declaratively specified how we would like to change our data into what we will train our model on.
+	- The next step is to fit the RFormula transformer to the data to let it discover the possible values of each column.
+	- Not all transformers have this requirement but because RFormula will automatically handle categorical variables for us, it needs to 
+	  determine which columns are categorical and which are not, as well as what the distinct values of the categorical columns are.
+	- Once we call fit, it returns a “trained” version of our transformer we can then use to actually transform our data.
+	
+	Short Notes from jaceklaskowski book
+	- The concepts of Machine Learning and how they are modeled in Spark MLlib.
+		- Observation
+			- An observation is used to learn about or evaluate (i.e. draw conclusions about) the observed item’s target value.
+			- Spark models observations as rows in a DataFrame.
+		- Feature
+			- A feature (aka dimension or variable) is an attribute of an observation. It is an independent variable.
+			- Spark models features as columns in a DataFrame (one per feature or a set of features)
+			- There are two classes of features:
+				- Categorical with discrete values, i.e. the set of possible values is limited, and can range from one to many thousands. 
+				  There is no ordering implied, and so the values are incomparable.
+				- Numerical with quantitative values, i.e. any numerical values that you can compare to each other. You can further classify 
+				  them into discrete and continuous features.
+		- Label
+			- A label is a variable that a machine learning system learns to predict that are assigned to observations.
+			- There are categorical and numerical labels.
+			- A label is a dependent variable that depends on other dependent or independent variables like features.
+	
+	- ML Pipelines (spark.ml)
+		- The ML Pipeline API is a new DataFrame-based API developed under org.apache.spark.ml package and is the primary API for MLlib as of Spark 2.0.
+		- The key concepts of Pipeline API (aka spark.ml Components):
+			- Pipeline
+			- PipelineStage
+			- Transformers
+			- Models
+			- Estimators
+			- Evaluator
+			- Params (and ParamMaps)
+			
+			
+			-Transformers
+				- A transformer is a ML Pipeline component that transforms a DataFrame into another DataFrame (both called datasets).
+				- Transformers prepare a dataset for an machine learning algorithm to work with. They are also very helpful 
+				  to transform DataFrames in general (even outside the machine learning space).
+				- A few available implementations of Transformer:
+						- StopWordsRemover
+						- Binarizer
+						- SQLTransformer
+						- VectorAssembler  - a feature transformer that assembles (merges) multiple columns into a (feature) vector column.
+						- UnaryTransformer
+							- Tokenizer
+							- RegexTokenizer
+							- NGram
+							- HashingTF
+							- OneHotEncoder
+						- Model
+		
+		
+				- StopWordsRemover 
+					- is a machine learning feature transformer that takes a string array column and outputs a string array column with all defined stop words removed.
+					- The transformer comes with a standard set of English stop words as default (that are the same as scikit-learn uses, i.e. 
+						from the Glasgow Information Retrieval Group).
+				
+				- Binarizer	
+					- Binarizer is a Transformer that splits the values in the input column into two groups-"ones" for values larger than the threshold and "zeros" for the others.
+					- It works with DataFrames with the input column of DoubleType or VectorUDT. 
+					- The type of the result output column matches the type of the input column, i.e. DoubleType or VectorUDT.
+				
+				- SQLTransformer
+					- SQLTransformer is a Transformer that does transformations by executing SELECT  FROM __THIS__ with ___THIS__ being the 
+						underlying temporary table registered for the input dataset.
+					- Internally, __THIS__ is replaced with a random name for a temporary table (using registerTempTable).
+					
+				- VectorAssembler
+					- VectorAssembler is a feature transformer that assembles (merges) multiple columns into a (feature) vector column.
+					- It supports columns of the types NumericType, BooleanType, and VectorUDT
+					- Doubles are passed on untouched. Other numberic types and booleans are cast to doubles.
+				
+				- UnaryTransformers
+					- The UnaryTransformer abstract class is a specialized Transformer that applies transformation to one 
+					   input column and writes results to another (by appending a new column).
+					- The following are UnaryTransformer implementations in spark.ml:
+						- Tokenizer : that converts a string column to lowercase and then splits it by white spaces.
+						- RegexTokenizer : that extracts tokens.
+						- NGram : that converts the input array of strings into an array of n-grams(of n words)..
+						- HashingTF : that maps a sequence of terms to their term frequencies (cf. SPARK-13998 HashingTF should extend UnaryTransformer)
+						- OneHotEncoder : that maps a numeric input column of label indices onto a column of binary vectors.
