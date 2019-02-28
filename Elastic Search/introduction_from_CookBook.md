@@ -1,34 +1,30 @@
 
  							Elastic search notes from cookbook
  
- chapter : 1 Introduction
+ ###   chapter : 1 Introduction
  	- The key concepts in ElasticSearch are 
 		- node, index, shard, mapping/type,document, and field.
 	- ElasticSearch can be used both as a search engine as well as a data store.
 	- Some details on data replications and base node communication processes are also explained.
 	  - Every instance of ElasticSearch is called a node. 
 	  - Several nodes are grouped in a cluster.
-	  - A common approach in cluster management is to have a master node, which is the main reference for all cluster-level actions, 
-	    and the other nodes, called secondary nodes, that replicate the master data and its actions.
-	  - To be consistent in the write operations, all the update actions are first committed in the master node and then replicated 
-	    in the secondary nodes.
+	  - A common approach in cluster management is to have a master node, which is the main reference for all cluster-level 	   actions,and the other nodes, called secondary nodes, that replicate the master data and its actions.
+	  - To be consistent in the write operations, all the update actions are first committed in the master node and then 			replicated in the secondary nodes.
 	  - In a cluster with multiple nodes, if a master node dies, a master-eligible node is elected to be the new master node. 
 	    This approach allows automatic failover to be set up in an ElasticSearch cluster.
-	  - How it works...
-	  	- Our main data container is called index (plural indices) and it can be considered as a database in the traditional SQL world.
-		- In an index, the data is grouped into data types called mappings in ElasticSearch.
-		- A mapping describes how the records are composed (fields).
-		- Every record that must be stored in ElasticSearch must be a JSON object.
-		- Natively, ElasticSearch is a schema-less data store;
-		- when you enter records in it during the insert process it processes the records, splits it into fields, and updates the 
-		  schema to manage the inserted data.
-		- To manage huge volumes of records, ElasticSearch uses the common approach to split an index into multiple shards 
-		  so that they can be spread on several nodes.
-		- Shard management is transparent to the users; all common record operations are managed automatically in the
-		  ElasticSearch application layer.
-		- Every record is stored in only a shard;
-		- the sharding algorithm is based on a record ID, so many operations that require loading and changing of records/objects, 
-		  can be achieved without hitting all the shards, but only the shard (and its replica) that contains your object.
+  #### How it works...
+	- Our main data container is called index (plural indices) and it can be considered as a database in the 				traditional SQL world.
+	- In an index, the data is grouped into data types called mappings in ElasticSearch.
+	- A mapping describes how the records are composed (fields).
+	- Every record that must be stored in ElasticSearch must be a JSON object.
+	- Natively, ElasticSearch is a schema-less data store;
+	- when you enter records in it during the insert process it processes the records, splits it into fields, and 				updates the schema to manage the inserted data.
+	- To manage huge volumes of records, ElasticSearch uses the common approach to split an index into multiple 				shards 
+	  so that they can be spread on several nodes.
+	- Shard management is transparent to the users; all common record operations are managed automatically in the
+	  ElasticSearch application layer.
+	- Every record is stored in only a shard;
+	- the sharding algorithm is based on a record ID, so many operations that require loading and changing of 			records/objects, can be achieved without hitting all the shards, but only the shard (and its replica) that 			contains your object.
 		  
 		  
 		  
@@ -50,7 +46,8 @@
 		  
 		  
 		  
- - Chapter 4 basic operations
+ ### Chapter 4 basic operations
+ ___
    - The first operation before starting to Index data in ElasticSearch is to create an index—the main
 	 container of our data.
    - An Index is similar to Database concept in SQL, 
@@ -59,267 +56,269 @@
    - The HTTP method to create an index is PUT (POST also works); the REST URL contains the index name:
 	 http://<server>/<index_name>
    - To create an index, we will perform the following steps:
-   		1.	 Using the command line, we can execute a PUT call:
-			curl -XPUT http://127.0.0.1:9200/myindex -d '{
-				"settings" : {
-					"index" : {
-						"number_of_shards" : 2,
-						"number_of_replicas" : 1
-					}
+	-  Using the command line, we can execute a PUT call:
+		```
+		curl -XPUT http://127.0.0.1:9200/myindex -d '{
+			"settings" : {
+				"index" : {
+					"number_of_shards" : 2,
+					"number_of_replicas" : 1
 				}
-			}'
-		2.	 The result returned by ElasticSearch, if everything goes well, should be:
-			{"acknowledged":true}
-		3.	 If the index already exists, then a 400 error is returned:
-			{"error":"IndexAlreadyExistsException[[myindex] Already
-			exists]","status":400}
+			}
+		}'
+		```
+	- The result returned by ElasticSearch, if everything goes well, should be:
+		{"acknowledged":true}
+	- If the index already exists, then a 400 error is returned:
+		{"error":"IndexAlreadyExistsException[[myindex] Already
+		exists]","status":400}
+___
+#### NOTE : The index name will be mapped to a directory on your storage.
+___
+- During index creation, the replication can be set with two parameters in the settings/index object:	
+  - number_of_shard : This controls the number of shards that compose the index (every shard can store up to 2^32 documents).
+  - number_of_replicas : This controls the number of replicas (how many times your data is replicated in the cluster for high 				availability).A good practice is to set this value to at least to 1
+  - The API call initializes a new index, which means:
+	- The index is created in a primary node first and then its status is propagated to the cluster level
+	- A default mapping (empty) is created
+	- All the shards required by the index are initialized and ready to accept data
+___
+#### There's more...
+___
+- The index creation command also allows us to pass the mappings section, which contains the mapping definitions. 
+	  It is a shortcut to create an index with mappings, without executing an extra PUT mapping call.
+- A common example of this call, using the mapping from the Putting a mapping in an index is 
+```
+curl -XPOST localhost:9200/myindex -d '{
+	"settings" : {
+	"number_of_shards" : 2,
+	"number_of_replicas" : 1
+	},
+	"mappings" : {
+		"order" : {
+			"properties" : {
+				"id" : {"type" : "string", "store" : "yes" ,
+				"index":"not_analyzed"},
+				"date" : {"type" : "date", "store" : "no" ,
+				"index":"not_analyzed"},
+				"customer_id" : {"type" : "string", "store" : "yes" ,
+				"index":"not_analyzed"},
+				"sent" : {"type" : "boolean", "index":"not_analyzed"},
+				"name" : {"type" : "string", "index":"analyzed"},
+				"quantity" : {"type" : "integer", "index":"not_analyzed"},
+				"vat" : {"type" : "double", "index":"no"}
+			}
+		}
+	}
+}'
+```
+___
+### Deleting an index
+___
+- Deleting an index means deleting its shards, mappings, and data.
+- There are many common scenarios where we need to delete an index, such as the following:
+  - Removing the index to clean unwanted/obsolete data (for example,old logstash indices)
+  - Resetting an index for a scratch restart
+  - Deleting an index that has some missing shard, mainly due to some failure,to bring back the cluster to a valid state
+____			
+#### How to do it...
+___			
+- The HTTP method used to delete an index is DELETE.
+ - The URL contains only the index name:
+	http://<server>/<index_name>
+ - To delete an index, we will perform the following steps:
+   - From a command line, we can execute a DELETE call:
+	   `curl -XDELETE http://127.0.0.1:9200/myindex`
+    - The result returned by ElasticSearch, if everything goes well, should be:
+		`{"acknowledged":true}`
+    - If the index doesn't exist, then a 404 error is returned:
+		`{"error":"IndexMissingException[[myindex] missing]","status":404}`
+___
+#### How it works...
+___			
+ - When an index is deleted, all the data related to the index is removed from the disk and is lost.
+ - During the deletion process, at first, the cluster is updated when the shards are deleted from the storage. 
+   This operation is fast; in the traditional filesystem it is implemented as a recursive delete.
+ - It's not possible to restore a deleted index if there is no backup.
+ - Also, calling by using the special _all , index_name can be used to remove all the indices. In production, 
+   it is a good practice to disable the all indices deletion parameter by adding the following line to 
+   elasticsearch.yml :
+	action.destructive_requires_name:true
 	
-NOTE : The index name will be mapped to a directory on your storage.
+ ### Opening/closing an index
+- If you want to keep your data but save resources (memory/CPU), a good alternative to deleting an Index is to close it.
+- ElasticSearch allows you to open or close an index to put it in online/offline mode.
+___			
+#### How to do it...
+___
 
-	- During index creation, the replication can be set with two parameters in the
-	  settings/index object:	
-	  	- number_of_shard : This controls the number of shards that compose the
-		  index (every shard can store up to 2^32 documents).
-		- number_of_replicas : This controls the number of replicas (how many times your data is replicated in the cluster for high availability).
-		  A good practice is to set this value to at least to 1
-		
-	- The API call initializes a new index, which means:
-		- The index is created in a primary node first and then its status is propagated to the cluster level
-		- A default mapping (empty) is created
-		- All the shards required by the index are initialized and ready to accept data
-	
-	- There's more...
-		- The index creation command also allows us to pass the mappings section, which contains the mapping definitions. 
-		  It is a shortcut to create an index with mappings, without executing an extra PUT mapping call.
-		- A common example of this call, using the mapping from the Putting a mapping in an index is 
-		
-			curl -XPOST localhost:9200/myindex -d '{
-				"settings" : {
-				"number_of_shards" : 2,
-				"number_of_replicas" : 1
-				},
-				"mappings" : {
-					"order" : {
-						"properties" : {
-							"id" : {"type" : "string", "store" : "yes" ,
-							"index":"not_analyzed"},
-							"date" : {"type" : "date", "store" : "no" ,
-							"index":"not_analyzed"},
-							"customer_id" : {"type" : "string", "store" : "yes" ,
-							"index":"not_analyzed"},
-							"sent" : {"type" : "boolean", "index":"not_analyzed"},
-							"name" : {"type" : "string", "index":"analyzed"},
-							"quantity" : {"type" : "integer", "index":"not_analyzed"},
-							"vat" : {"type" : "double", "index":"no"}
-						}
-					}
-				}
-			}'
+1) From the command line, we can execute a POST call to close an index:
+	`curl -XPOST http://127.0.0.1:9200/myindex/_close`
+2) If the call is successful, the result returned by ElasticSearch should be:
+	`{"acknowledged":true}`
+3) To open an index from the command line, enter:
+	`curl -XPOST http://127.0.0.1:9200/myindex/_open`
+4) If the call is successful, the result returned by ElasticSearch should be:
+	`{"acknowledged":true}`
+___
+#### How it works...
+___	
+- When an index is closed, there is no overhead on the cluster (except for the metadata state);
+  the index shards are turned off and don't use file descriptors, memory, or threads.
+				
+### Putting a mapping in an index
+- This recipe shows how to put a type of mapping in an index.
+___
+#### How to do it...
+___
+- The HTTP method for puttting a mapping is PUT (POST also works).
+The URL format for putting a mapping is:
+`http://<server>/<index_name>/<type_name>/_mapping`
 
-		### Deleting an index
-		
-		-	Deleting an index means deleting its shards, mappings, and data.
-		-	There are many common scenarios where we need to delete an index, such as the following:
-			- Removing the index to clean unwanted/obsolete data (for example,old logstash indices)
-			- Resetting an index for a scratch restart
-			- Deleting an index that has some missing shard, mainly due to some failure,to bring back the cluster to a valid state
-			
-			#### How to do it...
-			
-			- The HTTP method used to delete an index is DELETE.
-			 - The URL contains only the index name:
-			 	http://<server>/<index_name>
-			 - To delete an index, we will perform the following steps:
-			 	- From a command line, we can execute a DELETE call:
-				   curl -XDELETE http://127.0.0.1:9200/myindex
-				- The result returned by ElasticSearch, if everything goes well, should be:
-					{"acknowledged":true}
-				- If the index doesn't exist, then a 404 error is returned:
-					{"error":"IndexMissingException[[myindex] missing]","status":404}
-			
-			#### How it works...
-			
-			 - When an index is deleted, all the data related to the index is removed from the disk and is lost.
-			 - During the deletion process, at first, the cluster is updated when the shards are deleted from the storage. 
-			   This operation is fast; in the traditional filesystem it is implemented as a recursive delete.
-			 - It's not possible to restore a deleted index if there is no backup.
-			 - Also, calling by using the special _all , index_name can be used to remove all the indices. In production, 
-			   it is a good practice to disable the all indices deletion parameter by adding the following line to 
-			   elasticsearch.yml :
-				action.destructive_requires_name:true
+- To put a mapping in an Index, we will perform the following steps:
+  1. If we consider the type order of the previous chapter, the call will be:
+  
+```
+curl -XPUT 'http://localhost:9200/myindex/order/_mapping' -d '{
+	"order" : {
+		"properties" : {
+			"id" : {"type" : "string", "store" : "yes" ,
+			"index":"not_analyzed"},
+			"date" : {"type" : "date", "store" : "no" ,
+			"index":"not_analyzed"},
+			"customer_id" : {"type" : "string", "store" : "yes" ,
+			"index":"not_analyzed"},
+			"sent" : {"type" : "boolean",
+			"index":"not_analyzed"},
+			"name" : {"type" : "string", "index":"analyzed"},
+			"quantity" : {"type" : "integer",
+			"index":"not_analyzed"},
+			"vat" : {"type" : "double", "index":"no"}
+		}
+	}
+}'
+```
+    2. If successful, the result returned by ElasticSearch should be:
+	`{"acknowledged":true}`
+___
+#### How it works...
+___
+- This call checks if the index exists and then it creates one or more types of mapping as described in the definition.
+- During mapping insertion, if there is an existing mapping for this type, it is merged with the new one.
+- If there is a field with a different type and the type cannot be updated by
+	expanding the fields property, an exception is raised.
+- To prevent exception during the merging mapping phase, it's possible to specify the parameter 
+	ignore_conflicts to true (default is false ).
+___
+### Indexing a document
+___
+- In ElasticSearch, there are two vital operations namely, Indexing and Searching.
+- Indexing means inserting one or more document in an index; this is similar to the insert command of a relational database.
+- the core engine of ElasticSearch, inserting or updating a document has the same cost.
+___
+-  ##### How to do it...
+___
+- To index a document, several REST entry points can be used:
+	Method 		URL
+	POST 		http://<server>/<index_name>/<type>
+	PUT/POST 	http://<server>/<index_name>/<type>/<id>
+	PUT/POST 	http://<server>/<index_name>/<type>/<id>/_create
 
-		 ### Opening/closing an index
-		 	- If you want to keep your data but save resources (memory/CPU), a good alternative to deleting an Index is to close it.
-			- ElasticSearch allows you to open or close an index to put it in online/offline mode.
-			
-			#### How to do it...
-				1) From the command line, we can execute a POST call to close an index:
-					curl -XPOST http://127.0.0.1:9200/myindex/_close
-				2) If the call is successful, the result returned by ElasticSearch should be:
-					{"acknowledged":true}
-				3) To open an index from the command line, enter:
-					curl -XPOST http://127.0.0.1:9200/myindex/_open
-				4) If the call is successful, the result returned by ElasticSearch should be:
-					{"acknowledged":true}
-				
-				#### How it works...
-				- When an index is closed, there is no overhead on the cluster (except for the metadata state);
-					the index shards are turned off and don't use file descriptors, memory, or threads.
-				
-			### Putting a mapping in an index
-				- This recipe shows how to put a type of mapping in an index.
-				
-				#### Getting ready
-				- You will need a working ElasticSearch cluster and the index created
-				
-				#### How to do it...
-				- The HTTP method for puttting a mapping is PUT (POST also works).
-					The URL format for putting a mapping is:
-					http://<server>/<index_name>/<type_name>/_mapping
-					
-					- To put a mapping in an Index, we will perform the following steps:
-					  1. If we consider the type order of the previous chapter, the call will be:
-					
-					  	```
-						curl -XPUT 'http://localhost:9200/myindex/order/_mapping' -d '{
-							"order" : {
-								"properties" : {
-									"id" : {"type" : "string", "store" : "yes" ,
-									"index":"not_analyzed"},
-									"date" : {"type" : "date", "store" : "no" ,
-									"index":"not_analyzed"},
-									"customer_id" : {"type" : "string", "store" : "yes" ,
-									"index":"not_analyzed"},
-									"sent" : {"type" : "boolean",
-									"index":"not_analyzed"},
-									"name" : {"type" : "string", "index":"analyzed"},
-									"quantity" : {"type" : "integer",
-									"index":"not_analyzed"},
-									"vat" : {"type" : "double", "index":"no"}
-								}
-							}
-						}'
-						
-						```
-						
-						2. If successful, the result returned by ElasticSearch should be:
-							```
-							{"acknowledged":true}
-							```
-				#### How it works...
-					- This call checks if the index exists and then it creates one or more types of mapping as
-						described in the definition.
-					- During mapping insertion, if there is an existing mapping for this type, it is merged with
-					   the new one.
-					- If there is a field with a different type and the type cannot be updated by
-						expanding the fields property, an exception is raised.
-					- To prevent exception during the merging mapping phase, it's possible to specify the parameter 
-						ignore_conflicts to true (default is false ).
+- We will perform the following steps:
+1. If we consider the type order mentioned in earlier chapters, the call to index a document will be:
+	```
+	curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw' -d '{
+		"id" : "1234",
+		"date" : "2013-06-07T12:14:54",
+		"customer_id" : "customer1",
+		"sent" : true,
+		"in_stock_items" : 0,
+		"items":[
+			{"name":"item1", "quantity":3, "vat":20.0},
+			{"name":"item2", "quantity":2, "vat":20.0},
+			{"name":"item3", "quantity":1, "vat":10.0}
+		]
+	}'
+	```
+___
+  #### How it works...
+___
+- One of the most used APIs in ElasticSearch is the index. Basically, indexing a JSON document consists of these steps:
+  - Routing the call to the correct shard based on the ID or routing/parent metadata.
+	If the ID is not supplied by the client, a new one is created.
+  - Validating the JSON which has been sent.
+  - Processing the JSON according to the mapping. If new fields are present in the
+	document (the mapping can be updated), new fields are added in the mapping.
+  - Indexing the document in the shard. If the ID already exists, it is then updated.
+  - If it contains nested documents, it extracts them and processes them separately.
+  - Returns information about the saved document (ID and versioning).
+___
+#### There's more...
+___
+  - ElasticSearch allows the passing of several query parameters in the index API URL for
+	controlling how the document is indexed.
+  - routing : This controls the shard to be used for indexing, for example:
+	`curl -XPOST 'http://localhost:9200/myindex/order?routing=1'`
+  - parent : This defines the parent of a child document and uses this value to apply routing. 
+	The parent object must be specified in the mappings, such as:
+	`curl -XPOST 'http://localhost:9200/myindex/order?parent=12'`
+___
+#### Getting a document
+___
+- The GET REST call allows us to get a document in real time without the need of a refresh.
+___
+###### How to do it...
+___
 
+- The GET method allows us to return a document given its index, type and ID.
+- The REST API URL is:
+	http://<server>/<index_name>/<type_name>/<id>
+- If we consider the document we indexed in the previous recipe, the call will be:
+	`curl –XGET 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw?pretty=true'`
+- The result returned by ElasticSearch should be the indexed document:
+```
+{
+	"_index":"myindex",
+	"_type":"order",
+	"_id":"2qLrAfPVQvCRMe7Ku8r0Tw",
+	"_version":1,
+	"found":true,
+	"_source": {
+		"id" : "1234",
+		"date" : "2013-06-07T12:14:54",
+		"customer_id" : "customer1",
+		"sent" : true,
+		"items":[
+			{"name":"item1", "quantity":3, "vat":20.0},
+			{"name":"item2", "quantity":2, "vat":20.0},
+			{"name":"item3", "quantity":1, "vat":10.0}
+		]
+	}
+}
+```
+- Our indexed data is contained in the _source parameter, but other information is returned as well:		
+  - _index : This is the index that stores the document
+  - _type : This denotes the type of the document
+  - _id : This denotes the ID of the document
+  - _version : This denotes the version of the document
+  - found : This denotes if the document has been found
 
-			### Indexing a document
-				- In ElasticSearch, there are two vital operations namely, Indexing and Searching.
-				- Indexing means inserting one or more document in an index; this is similar to the insert command of a relational database.
-				- the core engine of ElasticSearch, inserting or updating a document has the same cost.
-				-  ##### How to do it...
-					- To index a document, several REST entry points can be used:
-							Method 		URL
-							POST 		http://<server>/<index_name>/<type>
-							PUT/POST 	http://<server>/<index_name>/<type>/<id>
-							PUT/POST 	http://<server>/<index_name>/<type>/<id>/_create
+- There are several additional parameters that can be used to control the GET call:		
+  - fields : This allows us to retrieve only a subset of fields. This is very useful to reduce bandwidth or 
+    to retrieve calculated fields such as the attachment mapping ones:
+	`curl 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw?fields=date,sent'`
+___		
+### Deleting a document
+___
+- Deleting documents in ElasticSearch is possible in two ways: by using the DELETE call or the DELETE BY QUERY call;
+___			
+#### How to do it...
+___				
+- The REST API URL is the same as the GET calls, but the HTTP method is DELETE:
+			http://<server>/<index_name>/<type_name>/<id>
 
-					- We will perform the following steps:
-						1. If we consider the type order mentioned in earlier chapters, the call to index a document will be:
-							```
-							curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw' -d '{
-								"id" : "1234",
-								"date" : "2013-06-07T12:14:54",
-								"customer_id" : "customer1",
-								"sent" : true,
-								"in_stock_items" : 0,
-								"items":[
-									{"name":"item1", "quantity":3, "vat":20.0},
-									{"name":"item2", "quantity":2, "vat":20.0},
-									{"name":"item3", "quantity":1, "vat":10.0}
-								]
-							}'
-							```
-					  ##### How it works...
-					  	 - One of the most used APIs in ElasticSearch is the index. Basically, indexing a JSON document consists of these steps:
-						  - Routing the call to the correct shard based on the ID or routing/parent metadata.
-						  	If the ID is not supplied by the client, a new one is created.
-						  - Validating the JSON which has been sent.
-						  - Processing the JSON according to the mapping. If new fields are present in the
-							document (the mapping can be updated), new fields are added in the mapping.
-						  - Indexing the document in the shard. If the ID already exists, it is then updated.
-						  - If it contains nested documents, it extracts them and processes them separately.
-						  - Returns information about the saved document (ID and versioning).
-						  
-						  ###### There's more...
-						  - ElasticSearch allows the passing of several query parameters in the index API URL for
-							controlling how the document is indexed.
-						  - routing : This controls the shard to be used for indexing, for example:
-							curl -XPOST 'http://localhost:9200/myindex/order?routing=1'
-						  - parent : This defines the parent of a child document and uses this value to apply routing. 
-						  	The parent object must be specified in the mappings, such as:
-							curl -XPOST 'http://localhost:9200/myindex/order?parent=12'
-							
-				
-				#### Getting a document
-				
-					- The GET REST call allows us to get a document in real time without the need of a refresh.
-					
-					###### How to do it...
-					- The GET method allows us to return a document given its index, type and ID.
-					- The REST API URL is:
-						http://<server>/<index_name>/<type_name>/<id>
-					- If we consider the document we indexed in the previous recipe, the call will be:
-						curl –XGET 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw?pretty=true'
-					- The result returned by ElasticSearch should be the indexed document:
-						
-						```
-						{
-							"_index":"myindex",
-							"_type":"order",
-							"_id":"2qLrAfPVQvCRMe7Ku8r0Tw",
-							"_version":1,
-							"found":true,
-							"_source": {
-								"id" : "1234",
-								"date" : "2013-06-07T12:14:54",
-								"customer_id" : "customer1",
-								"sent" : true,
-								"items":[
-									{"name":"item1", "quantity":3, "vat":20.0},
-									{"name":"item2", "quantity":2, "vat":20.0},
-									{"name":"item3", "quantity":1, "vat":10.0}
-								]
-							}
-						}
-
-						```
-				- Our indexed data is contained in the _source parameter, but other information is returned as well:		
-					- _index : This is the index that stores the document
-					- _type : This denotes the type of the document
-					- _id : This denotes the ID of the document
-					- _version : This denotes the version of the document
-					- found : This denotes if the document has been found
-					
-				- There are several additional parameters that can be used to control the GET call:		
-					- fields : This allows us to retrieve only a subset of fields. This is very useful to reduce bandwidth or 
-					  to retrieve calculated fields such as the attachment mapping ones:
-					curl 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw?fields=date,sent'			
-					
-					
-			#### Deleting a document
-				- Deleting documents in ElasticSearch is possible in two ways: by using the DELETE call or the DELETE BY QUERY call;
-				
-				##### How to do it...
-				- The REST API URL is the same as the GET calls, but the HTTP method is DELETE:
-					http://<server>/<index_name>/<type_name>/<id>
-					
-				- If we consider the order index in the Indexing a document recipe, the call to delete a document will be:
-					curl -XDELETE'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw'	
+- If we consider the order index in the Indexing a document recipe, the call to delete a document will be:
+	curl -XDELETE'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw'	
 					
 			#### Updating a document
 				- There are two available solutions to perform this operation in ElasticSearch, namely by adding the
