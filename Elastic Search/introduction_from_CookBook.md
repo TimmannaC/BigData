@@ -557,15 +557,53 @@ ___
 	- nested_filter : This defines a filter that can be used to remove non-matching
 				nested documents from the sorting value extraction. This filter allows a better
 				selection of values to be used for sorting.
-						
-				
-				
-				
-				
-				
-				
-				
-					
+___
+#### Counting matched results
+___
+- It is often required to return only the count of the matched results and not the results
+themselves.
+***
+#### How to do it...
+***
+- In order to execute a counting query, perform the following steps:
+  1. From the command line, execute a count query:				
+    `curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_count?pretty=true' -d '{"query":{"match_all":{}}}'` 
+  2. The following result should be returned by ElasticSearch if everything works all right:
+    ```
+    {
+	"count" : 3,
+	"_shards" : {
+	"total" : 5,
+	"successful" : 5,
+	"failed" : 0
+	}
+     }
+     ```
+***
+#### How it works...
+***
+- The query is interpreted as it is done for searching.
+- The count is processed and distributed in all the shards, in which it's mapped in a low-level Lucene count call.
+___
+#### NOTE : In ElasticSearch, it is faster to count than search. If results are not required, it's good practice to use it.
+___
+
+- The HTTP method to execute a count is GET (but POST works too). The URL examples for the
+   REST endpoints are:
+	```
+	http://<server>/_count
+	http://<server>/<index_name(s)>/_count
+	http://<server>/<index_name(s)>/<type_name(s)>/_count
+
+	```
+___
+### Deleting by query
+___
+
+***				
+#### How to do it...
+***
+
 					
 					
 					
