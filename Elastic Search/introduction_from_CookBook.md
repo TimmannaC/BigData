@@ -598,21 +598,71 @@ ___
 	```
 ___
 ### Deleting by query
+				
+##### How to do it...
 ___
 
-***				
-#### How to do it...
-***
+- In order to execute a DELETE by query, perform the following steps:
+  1. Using the command line, execute a query, as follows:
+     `curl -XDELETE 'http:127.0.0.1:9200/test-index/test-type/_query?pretty=true' -d '{"query":{"match_all":{}}}'`	
+- The HTTP method to execute a DELETE query is DELETE , and the URL examples for the REST
+   endpoints are:
+   	http://<server>/_query
+	http://<server>/<index_name(s)>/_query
+	http://<server>/<index_name(s)>/<type_name(s)>/_query
+___
 
-					
-					
-					
-					
-					
-					
-					
-					
-					
+#### Matching all the documents
+___
+
+- One of the most used queries, usually in conjunction with a filter, is the match all query.
+
+#### How to do it...
+- In order to execute a match_all query, perform the following steps:
+
+1. From the command line, execute the query:
+ `curl -XPOST 'http:127.0.0.1/test-index/test-type/_search?pretty=true' -d '{"query":{"match_all":{}}}'`
+
+- The match_all query is often used in conjunction with a filter in a filter query, as follows:
+  ```
+	  curl -XPOST "http://127.0.0.1/test-index/test-type/_search" -d '{
+		"query":{ 
+		   "filtered":{
+			"query":{
+			   "match_all":{}
+			},
+			"filter":{
+			  "term":{
+			    "myfield": "myterm"
+			  }
+			}
+		   }
+		}
+	  }'
+  ```
+___
+#### Querying/filtering for a single term
+___
+
+- Searching or filtering for a particular term is frequently done. 
+- A term query and filter work with exact values and are generally very fast.
+- The term query/filter can be compared to the equals " =" query in the SQL world (for the fields that are not tokenized).
+
+___
+#### How to do it...					
+___
+
+- In order to execute a term query/filter, perform the following steps:
+   1. Execute a term query from the command line:					 
+     ```
+     curl -XPOST 'http://127.0.0.1:9200/test-index/test-type/_search?pretty=true' -d '{
+     		"query":{
+		   "term":{
+		      "uuid": "3333"
+		   }
+		}
+     }'
+     ```
 					
 					
 					
