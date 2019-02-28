@@ -320,238 +320,243 @@ ___
 - If we consider the order index in the Indexing a document recipe, the call to delete a document will be:
 	curl -XDELETE'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw'	
 					
-			#### Updating a document
-				- There are two available solutions to perform this operation in ElasticSearch, namely by adding the
-					new document, or by using the update call.
-				- The update call works in two ways:
-					1.	 By providing a script (based on supported ElasticSearch scripting languages) which
-					contains the code that must be executed to update the record
-					2.	 By providing a document that must be merged with the original one
-				
-				##### How to do it...
-					- As we are changing the state of the data, the HTTP method is POST and the REST URL is:
-						http://<server>/<index_name>/<type_name>/<id>/_update
-					- If we consider the type order of the previous recipe, the call to update a document will be
-						```
-						curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{
-							"script" : "ctx._source.in_stock_items += count",
-							"params" : {
-								"count" : 4
-							}
-						}'
-						```
-					- It's possible to pass parameters to a script by passing a JSON object.
-					- A script can control the ElasticSearch behavior after the script execution by setting the ctx.op value of the context.
-						- ctx.op="delete" : Using this, the document will be deleted after the script execution.
-						- ctx.op="none" : Using this, the document will skip the indexing process.A good practice to improve performance 
-						  is to set the ctx.op="none" to prevent reindexing overhead if the script doesn't update the document.
+___
+### Updating a document
+- There are two available solutions to perform this operation in ElasticSearch, namely by adding the
+	new document, or by using the update call.
+- The update call works in two ways:
+	1. By providing a script (based on supported ElasticSearch scripting languages) which
+	contains the code that must be executed to update the record
+	2. By providing a document that must be merged with the original one
+___				
+#### How to do it...
+___
+- As we are changing the state of the data, the HTTP method is POST and the REST URL is:
+	`http://<server>/<index_name>/<type_name>/<id>/_update`
+- If we consider the type order of the previous recipe, the call to update a document will be
+```
+curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{
+	"script" : "ctx._source.in_stock_items += count",
+	"params" : {
+		"count" : 4
+	}
+}'
+```
+- It's possible to pass parameters to a script by passing a JSON object.
+- A script can control the ElasticSearch behavior after the script execution by setting the ctx.op value of the context.
+- ctx.op="delete" : Using this, the document will be deleted after the script execution.
+- ctx.op="none" : Using this, the document will skip the indexing process.A good practice to improve performance 
+  is to set the ctx.op="none" to prevent reindexing overhead if the script doesn't update the document.
 
-						- It's also possible to pass an additional object in the upsert property to be used if the document 
-							is not available in the index :
-							```
-						    curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{
-							"script" : "ctx._source.in_stock_items += count",
-							"params" : {
-								"count" : 4
-							},
-							"upsert" : {"in_stock_items":4}
-							}'
-							```
-						- If you need to replace some field values, a good solution is to not write a complex update script, but to use the 
-						   special property doc , which allows to overwrite the values of an object. The document provided in the doc parameter 
-						   will be merged with the original one. This approach is more easy to use, but it cannot set the ctx.op. So, if the update
-							doesn't change the value of the original document, the next successive phase will always be executed:
-							```
-							curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{"doc" : {"in_stock_items":10}}'
-							```
-						- If the original document is missing, it is possible to use the provided doc for an upsert by providing the doc_as_upsert parameter:
-							```
-							curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{
-							"doc" : {
-								"in_stock_items":10
-								},
-								"doc_as_upsert":true
-							}'
+- It's also possible to pass an additional object in the upsert property to be used if the document 
+	is not available in the index :
+```
+curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{
+"script" : "ctx._source.in_stock_items += count",
+"params" : {
+	"count" : 4
+},
+"upsert" : {"in_stock_items":4}
+}'
+```
+- If you need to replace some field values, a good solution is to not write a complex update script, but to use the 
+   special property doc , which allows to overwrite the values of an object. The document provided in the doc parameter 
+   will be merged with the original one. This approach is more easy to use, but it cannot set the ctx.op. So, if the update
+	doesn't change the value of the original document, the next successive phase will always be executed:
+	`curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{"doc" : {"in_stock_items":10}}'`
+- If the original document is missing, it is possible to use the provided doc for an upsert by providing the doc_as_upsert parameter:
+```
+curl -XPOST 'http://localhost:9200/myindex/order/2qLrAfPVQvCRMe7Ku8r0Tw/_update' –d '{
+"doc" : {
+	"in_stock_items":10
+	},
+	"doc_as_upsert":true
+}'
+```
+___
+- Using MVEL, it is possible to apply advanced operations on field, such as:
+  - Removing a field:
+		`"script" : {"ctx._source.remove("myfield"}}`
+   - Adding a new field:
+		`"script" : {"ctx._source.myfield=myvalue"}}`
+___
+### Chapter 5 : Search, Queries, and Filters
+___
 
-						- Using MVEL, it is possible to apply advanced operations on field, such as:
-							- Removing a field:
-								"script" : {"ctx._source.remove("myfield"}}
-							- Adding a new field:
-								"script" : {"ctx._source.myfield=myvalue"}}
-			
-			
-		### Chapter 5 
-				Search, Queries, and Filters
-				
-				
-			- ElasticSearch allows you to use a rich domain specific language (DSL)
-			
-			##### How to do it...
-			- From the command line, execute a search, as follows:
-				curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search' -d '{"query":{"match_all":{}}}'
-				- In this case, we have used a match_all query which means that all the document are returned.
-				- The command, if everything is all right, will return the following result:
-					```
-					{
-					"took" : 0,
-					"timed_out" : false,
-					"_shards" : {
-						"total" : 5,
-						"successful" : 5,
-						"failed" : 0
-					},
-					"hits" : {
-						"total" : 3,
-						"max_score" : 1.0,
-						"hits" : [ {
-							"_index" : "test-index",
-							"_type" : "test-type",
-							"_id" : "1",
-							"_score" : 1.0,
-							"_source" : {
-								"position": 1,
-								"parsedtext": "Joe Testere nice guy", "name": "Joe Tester",
-								"uuid": "11111"
-							}
-						}, 
-						{
-							"_index" : "test-index",
-							"_type" : "test-type",
-							"_id" : "2",
-							"_score" : 1.0,
-							"_source" : {
-								"position": 2,
-								"parsedtext": "Bill Testere nice guy", 
-								"name": "BillBaloney", 
-								"uuid": "22222"
-							}
-						}, 
-						{
-							"_index" : "test-index",
-							"_type" : "test-type",
-							"_id" : "3",
-							"_score" : 1.0, 
-							"_source" : {
-								"position": 3,
-								"parsedtext":"Bill is not nice guy", 
-								"name": "Bill Clinton",
-								"uuid": "33333"
-						}
-						}]
-					}
-					}
-					```
-				- The result contains a lot of information, as follows:
-					- took : This is the time, in milliseconds, required to execute the query.
-					- time_out : This indicates whether a timeout has occurred during the search. This is related to the timeout parameter 
-						of the search. If a timeout occurred, you will get partial or no results.
-					- _shards : This is the status of the shards, which can be divided into the following:
-						- total : This is the total number of shards.
-						- successful : This is the number of shards in which the query was successful.
-						- failed : This is the number of shards in which the query failed, because some error or exception occurred during the query.
-					- hits : This represents the results and is composed of the following:
-						- total : This is the total number of documents that match the query.
-						- max_score : This is the match score of the first document. 
-							Usually this is 1 if no match scoring was computed, for example in sorting or filtering.
-						- hits : This is a list of the result documents.
-					- The result document has a lot of fields that are always available and other fields that depend
-						on the search parameters. The following are the most important fields:
-						- _index : This is the index that contains the document.
-						- _type : This is the type of the document.
-						- _id : This is the ID of the document.
-						- _source : This is the document's source
-						- _score : This is the query score of the document.
-						- sort : These are the values that are used to sort, if the documents are sorted.
-					
-				#### How it works...
-					- The HTTP method used to execute a search is GET (but POST works too), and the REST URL is:
-						- http://<server>/_search
-						- http://<server>/<index_name(s)>/_search
-						- http://<server>/<index_name(s)>/<type_name(s)>/_search
-					- The core query is usually contained in the body of the GET/POST call, but a lot of options can
-						also be expressed as URI query parameters, as follows:
-					- q : This is the query string used to perform simple string queries:
-						curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?q=uuid:11111'
-					- df : This is the default field to be used within the query:
-						curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?df=uuid&q=11111'
-					- from (by default, 0 ): This is the start index of the hits.
-					- size (by default, 10 ): This is the number of hits to be returned.
-					- analyzer : This is the default analyzer to be used.
-					- default_operator (default, OR ): This can be set to AND or OR .
-					- fields : This allows you to define fields that must be returned:
-						curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?q=parsedtext:joe&fields=name'
-					- sort (by default, score ): This allows you to change the order of the documents.
-						Sort is ascendant by default; if you need to change the order, add desc to the field:
-						curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?sort=name:desc'
-					- pretty (by default, false ): If this is true , the results will be pretty printed.
-					
-				- Generally, the query is contained in the body of the search, a JSON object.
-					- query : This contains the query to be executed.
-					- from (by default, 0 ) and size (by default, 10 ): These allow you to control pagination.
-						from defines the start position of the hits to be returned.
-					- sort : This allows you to change the order of the matched documents. This option is
-							fully covered in the next recipe, Sorting a result.
-					- post_filter (optional): This allows you to filter out the query results without affecting
-						the facet count. It's usually used to filter by facets values.
-					- _source (optional): This allows you to control the returned source. It can be
-						disabled ( false ), partially returned ( obj.* ), or multiple exclude/include rules.
-					- fielddata_fields (optional): This allows you to return the field data representation of your field.
-					- fields (optional): This controls the fields to be returned.
+- ElasticSearch allows you to use a rich domain specific language (DSL)
+___
+#### How to do it...
+___
 
+- From the command line, execute a search, as follows:
+   `curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search' -d '{"query":{"match_all":{}}}'`
+- In this case, we have used a match_all query which means that all the document are returned.
+- The command, if everything is all right, will return the following result:
+```
+{
+"took" : 0,
+"timed_out" : false,
+"_shards" : {
+	"total" : 5,
+	"successful" : 5,
+	"failed" : 0
+},
+"hits" : {
+	"total" : 3,
+	"max_score" : 1.0,
+	"hits" : [ {
+		"_index" : "test-index",
+		"_type" : "test-type",
+		"_id" : "1",
+		"_score" : 1.0,
+		"_source" : {
+			"position": 1,
+			"parsedtext": "Joe Testere nice guy", "name": "Joe Tester",
+			"uuid": "11111"
+		}
+	}, 
+	{
+		"_index" : "test-index",
+		"_type" : "test-type",
+		"_id" : "2",
+		"_score" : 1.0,
+		"_source" : {
+			"position": 2,
+			"parsedtext": "Bill Testere nice guy", 
+			"name": "BillBaloney", 
+			"uuid": "22222"
+		}
+	}, 
+	{
+		"_index" : "test-index",
+		"_type" : "test-type",
+		"_id" : "3",
+		"_score" : 1.0, 
+		"_source" : {
+			"position": 3,
+			"parsedtext":"Bill is not nice guy", 
+			"name": "Bill Clinton",
+			"uuid": "33333"
+	}
+	}]
+}
+}
+```
+- The result contains a lot of information, as follows:
+  - took : This is the time, in milliseconds, required to execute the query.
+  - time_out : This indicates whether a timeout has occurred during the search. This is related to the timeout parameter 
+	of the search. If a timeout occurred, you will get partial or no results.
+  - _shards : This is the status of the shards, which can be divided into the following:
+  - total : This is the total number of shards.
+	- successful : This is the number of shards in which the query was successful.
+	- failed : This is the number of shards in which the query failed, because some error or exception occurred during the query.
+- hits : This represents the results and is composed of the following:
+  - total : This is the total number of documents that match the query.
+  - max_score : This is the match score of the first document. 
+		Usually this is 1 if no match scoring was computed, for example in sorting or filtering.
+  - hits : This is a list of the result documents.
+- The result document has a lot of fields that are always available and other fields that depend
+	on the search parameters. The following are the most important fields:
+	- _index : This is the index that contains the document.
+	- _type : This is the type of the document.
+	- _id : This is the ID of the document.
+	- _source : This is the document's source
+	- _score : This is the query score of the document.
+	- sort : These are the values that are used to sort, if the documents are sorted.
+___
+#### How it works...
+___
+- The HTTP method used to execute a search is GET (but POST works too), and the REST URL is:
+	- http://<server>/_search
+	- http://<server>/<index_name(s)>/_search
+	- http://<server>/<index_name(s)>/<type_name(s)>/_search
+- The core query is usually contained in the body of the GET/POST call, but a lot of options can
+also be expressed as URI query parameters, as follows:
+- q : This is the query string used to perform simple string queries:
+  	`curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?q=uuid:11111'`
+- df : This is the default field to be used within the query:
+	`curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?df=uuid&q=11111'`
+- from (by default, 0 ): This is the start index of the hits.
+- size (by default, 10 ): This is the number of hits to be returned.
+- analyzer : This is the default analyzer to be used.
+- default_operator (default, OR ): This can be set to AND or OR .
+- fields : This allows you to define fields that must be returned:
+	`curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?q=parsedtext:joe&fields=name'`
+- sort (by default, score ): This allows you to change the order of the documents.
+Sort is ascendant by default; if you need to change the order, add desc to the field:
+	`curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?sort=name:desc'`
+- pretty (by default, false ): If this is true , the results will be pretty printed.
+- Generally, the query is contained in the body of the search, a JSON object.
+	- query : This contains the query to be executed.
+	- from (by default, 0 ) and size (by default, 10 ): These allow you to control pagination.
+		from defines the start position of the hits to be returned.
+	- sort : This allows you to change the order of the matched documents. This option is
+			fully covered in the next recipe, Sorting a result.
+	- post_filter (optional): This allows you to filter out the query results without affecting
+		the facet count. It's usually used to filter by facets values.
+	- _source (optional): This allows you to control the returned source. It can be
+		disabled ( false ), partially returned ( obj.* ), or multiple exclude/include rules.
+	- fielddata_fields (optional): This allows you to return the field data representation of your field.
+	- fields (optional): This controls the fields to be returned.
+___
 NOTE : Two main concepts are important in a search: query and filter.
 		1) A query means that the matched results are scored using an internal Lucene-scoring algorithm; 
 		2) In a filter, the results are only matched, without scoring.Because a filter doesn't need to
 			compute the score, it is generally faster and can be cached.
+__
+	
+### Sorting results
+___
+- When searching for results, the most common criteria for sorting in ElasticSearch is the relevance to a text query.
+___
+#### How to do it...
+___
+In order to sort the results, perform the following steps:
+1. Add a sort section to your query, as follows:
+``` 
+	curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?pretty=true' -d '{	
+		"query" :{ "match_all":{} },
+		"sort" : [
+			{"price" : { "order" : "asc" ,"mode": "avg", "ignore_unmapped":true,"missing":"_last" }},
+			"_score"
+			]									
+		}'
+```
+___
+### How it works...
+___
+- The sort parameter can be defined as a list that can contain both simple strings and JSON objects.
+- The sort string is the name of the field that is used to sort, similar to SQL's order by statement.
+- The JSON object allows you to use the following extra parameters:
+	- order ( asc / desc ): This defines whether the order must be considered in the
+		ascending format (which is the default) or the descending format.
+	- ignore_unmapped ( true / false ): This allows you to ignore the fields that do
+	   not have mappings in them. This option prevents errors during a search due to
+		missing mappings.
+	- unmapped_type : This defines the type of the sort parameter, if it is missing.
+	- missing ( _last / _first ): This defines how to manage a missing value: we can
+	  put them at the end ( _last ) of the results or at the start ( _first ).
+	- mode : This defines how to manage multiple value fields. The following are the possible values:
+		- min : This is the minimum value that is chosen (in the case of multiple prices
+				for an item, it chooses the lower value to be used for the comparison).
+		- max : This is the maximum value that is chosen.
+		- sum : Using this, the sort value will be computed as the sum of all the values.
+				This mode is only available on numeric fields.
+		- avg : This sets the sort value, with which the sort result will be an average of
+				all the values. This mode is only available on numeric fields.
 
-
-		### Sorting results
-			- When searching for results, the most common criteria for sorting in ElasticSearch is the relevance to a text query.
-			
-			#### How to do it...
-			In order to sort the results, perform the following steps:
-				1. Add a sort section to your query, as follows:
-					``` 
-						curl -XGET 'http://127.0.0.1:9200/test-index/test-type/_search?pretty=true' -d '{	
-							"query" :{ "match_all":{} },
-							"sort" : [
-								{"price" : { "order" : "asc" ,"mode": "avg", "ignore_unmapped":true,"missing":"_last" }},
-								"_score"
-								]									
-							}'
-					```
-			### How it works...
-				- The sort parameter can be defined as a list that can contain both simple strings and JSON objects.
-					- The sort string is the name of the field that is used to sort, similar to SQL's order by statement.
-					- The JSON object allows you to use the following extra parameters:
-						- order ( asc / desc ): This defines whether the order must be considered in the
-							ascending format (which is the default) or the descending format.
-						- ignore_unmapped ( true / false ): This allows you to ignore the fields that do
-						   not have mappings in them. This option prevents errors during a search due to
-							missing mappings.
-						- unmapped_type : This defines the type of the sort parameter, if it is missing.
-						- missing ( _last / _first ): This defines how to manage a missing value: we can
-						  put them at the end ( _last ) of the results or at the start ( _first ).
-						- mode : This defines how to manage multiple value fields. The following are the possible values:
-							- min : This is the minimum value that is chosen (in the case of multiple prices
-									for an item, it chooses the lower value to be used for the comparison).
-							- max : This is the maximum value that is chosen.
-							- sum : Using this, the sort value will be computed as the sum of all the values.
-									This mode is only available on numeric fields.
-							- avg : This sets the sort value, with which the sort result will be an average of
-									all the values. This mode is only available on numeric fields.
-				
-					- If we want to use sorting for a nested object, there are two extra parameters that can be used:
-						 - nested_path : This defines the nested object to be used for sorting. The field
-							defined for sorting will be related to the nested_path parameter. If it is not
-							defined, the sorting field will be related to the document root.
-						-  For example,
-							if we have an address object nested in a person document, we can sort
-							for the city.name values and use:
-							- address.city.name : This is used if you want to sort without defining the nested_path .
-							- city.name : Using this defines a nested_path address .
-						- nested_filter : This defines a filter that can be used to remove non-matching
-									nested documents from the sorting value extraction. This filter allows a better
-									selection of values to be used for sorting.
+- If we want to use sorting for a nested object, there are two extra parameters that can be used:
+	 - nested_path : This defines the nested object to be used for sorting. The field
+		defined for sorting will be related to the nested_path parameter. If it is not
+		defined, the sorting field will be related to the document root.
+	-  For example,
+		if we have an address object nested in a person document, we can sort
+		for the city.name values and use:
+		- address.city.name : This is used if you want to sort without defining the nested_path .
+		- city.name : Using this defines a nested_path address .
+	- nested_filter : This defines a filter that can be used to remove non-matching
+				nested documents from the sorting value extraction. This filter allows a better
+				selection of values to be used for sorting.
 						
 				
 				
