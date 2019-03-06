@@ -25,3 +25,39 @@ ___
 |						   |				   | Decision Trees |
 |						   |				   | Random Forests |
 |						   |				   | Gradient-Boosted Trees |
+|						   |  	Regression	   | Linear Regression | 
+|						   |				   | Logistic Regression |
+|						   |				   | Support Vector Machines |
+|  Unsupervised learning   | Clustering		   |  K-Means |
+|						   |				   |  Gaussian mixture |
+|						   |				   | Power Iteration Clustering (PIC) |
+|						   |				   | Latent Dirichlet Allocation (LDA) |
+|						   |				   | Streaming k-means |
+|						   | Dimensionality reduction | Singular Value Decomposition (SVD) |
+|						   |				   		  | Principal Component Analysis (PCA) |
+|	Recommender systems	   | Collaborative filtering | user-based collaborative filtering |
+|						   |						 | Item-based collaborative filtering |
+|						   |						 | Alternating Least Squares (ALS)    |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
