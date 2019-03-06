@@ -1,4 +1,4 @@
-			### Machine Learning with Spark and Hadoop
+### 			Machine Learning with Spark and Hadoop
 ___
 
 - Machine learning is split into two separate packages in spark:
