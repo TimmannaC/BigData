@@ -1,4 +1,4 @@
-### Machine Learning with Spark and Hadoop
+			### Machine Learning with Spark and Hadoop
 ___
 
 - Machine learning is split into two separate packages in spark:
@@ -38,6 +38,20 @@ ___
 |	Recommender systems	   | Collaborative filtering | user-based collaborative filtering |
 |						   |						 | Item-based collaborative filtering |
 |						   |						 | Alternating Least Squares (ALS)    |
+|  Feature extraction      | Feature extraction and transformation | TF-IDF |
+|						   |									   | Word2Vec |
+|						   |									   | Standard Scaler |
+|						   |									   | Normalizer |
+|						   |									   | Chi-Square Selector |
+|  Optimization            |	Optimization  |  Stochastic Gradient Descent |
+|						   |				  | Limited-memory BFGS |
+
+
+
+
+
+
+
 
 
 
