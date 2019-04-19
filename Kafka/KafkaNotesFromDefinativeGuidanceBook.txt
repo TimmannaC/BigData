@@ -1,0 +1,582 @@
+Kafka Tutorials from The Definitive Guidance Book.
+		
+why kafka	?
+	- Kafka is like a messaging system in that it lets you publish and subscribe to streams of messages.
+	- it is similar to products like ActiveMQ,RabbitMQ.
+	
+-- Messages & Batches
+	- A uint of data in kafka is called as a message.
+	- A messages can have an optional bit of metadata, which is referred to as a key.
+	- keys are used when messages are to be written to partitions in a more controlled manner.
+	- For efficiency, messages are written into kafka in batches.
+	
+	-- The diff b/w kafka and other messaging products are:
+		1) kafka lets you have a central platform that can scale elastically to handle all the streams of data
+		2) kafka is a true storage system build to store data for as long as you like.
+		
+	- Kafka follows publish/subscribe design pattern.
+	- Pub/sub systems often have a broker,a central point where messages are published.
+	- kafka is often described as a “distributed commit log” or more recently as a “distributing streaming platform.”
+	
+-- Topics & Partitions
+	- Messages in kafka are categorized into topics.
+	- the closest analogies for a topic is a folder in filesystem.
+	- Topics are additionally broken down into a number of partitions.
+	- Messages are written to it in an append-only fashion, and are read in order from beginning to end.
+	- each partition ca be hosted on a different server, means single topic can be scaled horizontally across multiple servers to provide performance.
+
+-- Producers & Consumers
+	- kafka clients are users of the system, and there are 2 basic types: producers & consumers.
+	- producers create a new messages. In pub/sub systems, these may be called publishers or writers.
+	- Consumers read messages. In pub/sub systems, these clients may be called subscribers or readers.
+	- The consumers subscribes to one or more topics and reads the messages in the order in which they were produced.
+	- the consumers keeps track of which messages it has already consumed by keeping track of the offset of messages.
+	- The offset is another bit of metadata - an integer value that continually increases - that kafka adds to each message as it is produced.
+	- Each message in the given partition has a unique offset.
+	- By storing the offset of the last consumed message for each partition, either in zookeeper or in kafka itself,
+		a consumer can stop and restart without losing the place.
+
+-- Brokers and Clusters
+	- A single kafka server is called a broker.
+	- The broker receives message from producers, assign offsets to them, and commits the message to storage on disk.
+	- Kafka brokers are designed to operate as part of a cluster.
+	- within a cluster of brokers one broker will also function as the cluster controller(elected automatically).
+	- The controller is responsible for administrative operations, including assigning partitions to brokers and monitoring for broker failures.
+	- A partition is owned by a single broker in the cluster, and that broker is called the leader of the partition.
+	- A partition may be assigned to multiple brokers, which will result in the partition being replicated.
+	- This provides redundancy of messages in the partition, such that another broker can take over leadership if there is a broker failure.
+	
+NOTE:	
+	- A key feature of Apache Kafka is that of retention, which is the durable storage of messages for some period of time.
+	- Kafka brokers are configured with a default retention setting for topics, either retaining messages for some period of time (e.g., 7 days)
+	  or until the topic reaches a certain size in bytes (e.g., 1 GB).
+	  
+-- Why Kafka ?
+	- There are many choices for publish/subscribe messaging systems, so what makes Apache Kafka a good choice?
+		
+		1) Multiple Producers
+			- Kafka is able to seamlessly handle multiple producers, whether those clients are using many topics or the same topic.
+			- This makes the system ideal for aggregating data from many frontend systems and making it consistent.
+
+		2) Multiple Consumers
+			- Kafka is designed for multiple consumers to read any single stream of messages without interfering with each other.
+			- This is in contrast to many queuing systems where once a message is consumed by one client, it is not available to any other.
+			- Multiple Kafka consumers can choose to operate as part of a group and share a stream, assuring that the entire group processes a given message only once.
+
+		3) Disk-Based Retention
+			- Not only can Kafka handle multiple consumers, but durable message retention means that consumers do not always need to work in real time.
+			- Messages are committed to disk, and will be stored with configurable retention rules.
+			- These options can be selected on a per-topic basis, allowing for different streams of messages to have different amounts of retention depending on the consumer needs.
+		
+		4) Scalable
+			- Kafka’s flexible scalability makes it easy to handle any amount of data.
+			- Expansions can be performed while the cluster is online, with no impact on the availability of the system as a whole.
+			- This also means that a cluster of multiple brokers can handle the failure of an individual broker, and continue servicing clients.
+
+		5) High Performance
+			- All of these features come together to make Apache Kafka a publish/subscribe messaging system with excellent performance under high load.
+			- Producers, consumers,and brokers can all be scaled out to handle very large message streams with ease.
+				
+			
+			
+-- Zookeeper Ensemble 
+	- A zookeeper cluster is called an ensemble.
+	- Due to the alogorithm used, it is recommended that ensemble contains an odd number of servers.
+	- To configure Zookeeper servers in an ensemble, they must have a common configration that lists all servers, 
+		and each server needs a myid file in the data directory that specifies the ID number of the server.
+	- the configuration file might look like this:
+		_________________________________________
+		|	tickTime=2000						|
+		|	dataDir=/var/lib/zookeeper			|
+		|	clientPort=2181						|
+		|	initLimit=20						|
+		|	syncLimit=5							|
+		|	server.1=zoo1.example.com:2888:3888	|
+		|	server.2=zoo2.example.com:2888:3888	|
+		|	server.3=zoo3.example.com:2888:3888	|
+		------------------------------------------											
+			
+		* initLimit --> is the amount of time to allow followers to connect with the leader.
+		* syncLimit --> The syncLimit value limits how out-of-sync followers can be with the leader.
+		* the configuration also lists each server in the ensemble.
+		* The servers are specified in the format server.X=hostname:peerPort:leaderPort
+				
+		where:
+			X => The id number of the server.
+			hostname => the hostname or IP address of the server.
+			peerPort => the TCP port over which servers in the ensemble communicate with each other.
+			leaderPort => The TCP port over which leader election is performed.
+					
+		- Clients only need to be able to connect to the ensemble over the clientPort, but the members of the ensemble must be 
+			able to communicate with each other over all the three ports.
+		- In addition to the shared configuration file, each server must have a file in the data directory with the name myid.
+		- The file must contain the ID number of the server, which must match the configuration file.
+				
+					
+-- Installing and running the kafka broker.
+     - To run the kafka broker
+	- /bin/kafka-server-start.sh conf/server.properties
+	
+     - Create and verify a topic
+	kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+	
+     - Produce messages to test a topic
+		kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test
+			Test Message 1
+			Test Message 2
+	
+     - Consumers messages from a test topic 
+	kafka/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning									
+											(or) 
+	kafka/bin/kafka-console-consumer.sh	--bootstrap-server localhost:9092 --topic test --from-beginning (New API)
+			Test Message 1
+			Test MEssage 2
+
+      -Some of the important broker-configurations are
+	1) broker.id : Every Kafka broker must have an integer identifier, which is set using the broker.id configuration.
+	2) port	: The example configuration file starts Kafka with a listener on TCP port 9092. this can be set to any available port by 
+				changing the port configuration parameter.	
+	3) zookeeper.connect : The location of the Zookeeper used for storing the broker metadata is set using the 	zookeeper.connect 
+							configuration parameter.
+	4) log.dirs : Kafka persists all messages to disk, and these log segments are stored in the directories specified in 
+					the log.dirs configuration.This is a comma-separated list of paths on the local system. 
+					If more than one path is specified,the broker will store partitions on them in a “least-used” 
+					fashion with one partition’s log segments stored within the same path. 	 		
+	5) num.recovery.threads.per.data.dir : Kafka uses a configurable pool of threads for handling log segments. 
+			Currently, this thread pool is used:
+				   • When starting normally, to open each partition’s log segments
+				   • When starting after a failure, to check and truncate each partition’s log segments
+				   • When shutting down, to cleanly close log segments
+	6) auto.create.topics.enable : The default Kafka configuration specifies that the broker should automatically 
+			create a topic under the following circumstances:
+					• When a producer starts writing messages to the topic
+					• When a consumer starts reading messages from the topic
+					• When any client requests metadata for the topic
+			-- you can set the auto.create.topics.enable configuration to false.
+		
+	Topic Defaults	:
+		The Kafka server configuration specifies many default configurations for topics that are created.	
+	7) num.partitions : The num.partitions parameter determines how many partitions a new topic is created with, 
+		primarily when automatic topic creation is enabled.This parameter defaults to one partition.
+			- partitions are the way a topic is scaled within a Kafka cluster.
+	8) log.retention.ms : The most common configuration for how long Kafka will retain messages is by time.
+			 - The default is specified in the configuration file using the log.retention.hours parameter, and it is set to 168 hours, or one week.
+	9) log.retention.bytes : Another way to expire messages is based on the total number of bytes of messages retained.
+			- This value is set using the log.retention.bytes parameter, and it is applied per-partition.	
+	10) log.segment.bytes : Once the log segment has reached the size specified by the log.segment.bytes parameter, which defaults to 1 GB, the log segment
+						is closed and a new one is opened.Once a log segment has been closed, it can be considered for expiration.
+	11) message.max.bytes : The Kafka broker limits the maximum size of a message that can be produced, configured by the message.max.bytes parameter, 
+							which defaults to 1000000, or 1 MB.A producer that tries to send a message larger than this will receive an error back from
+							the broker, and the message will not be accepted.
+			
+-- Kafka Clusters	
+	there are significant benefits to having multiple brokers configured as a cluster	
+		- The biggest benefit is the ability to scale the load across multiple servers.
+		- A close second is using replication to guard against data loss due to single system failures.
+			
+			
+-- Kafka Producers: Writing Messages to Kafka	
+	- We start producing messages to kafka by creating a producerRecord, which must include the topic we want to send the record to and a value.
+	- Optionally, we can also specify a key and/or a partition.
+	- Once we send the ProducerRecord , the first thing the producer will do is serialize the key and value objects to ByteArrays so they can be
+		sent over the network.
+	- Next, the data is sent to a partitioner.
+	- If we specified a partition in the ProducerRecord , the partitioner doesn’t do anything and simply returns the partition we specified.
+	- If we didn’t, the partitioner will choose a partition for us, usually based on the ProducerRecord key.
+	- Once a partition is selected, the producer knows which topic and partition the record will go to.
+	- It then adds the record to a batch of records that will also be sent to the same topic and partition.
+	- A separate thread is responsible for sending those batches of records to the appropriate Kafka brokers.
+	- When the broker receives the messages, it sends back a response.
+	- If the messages were successfully written to Kafka, it will return a RecordMetadata object with the topic, partition, and the offset of the 
+		record within the partition.
+	- If broker failed to write the messages it returns an error when producer receives an error, it may retry sending messages a few more times.
+	
+	-- Contructing a kafka producer.
+		1) The first step in writing messages to Kafka is to create a producer object with the properties you want to pass to the producer.
+		- A kafka producer has 3 mandatory properties.
+			
+			1) bootstrap.servers
+				- List of host:port pairs of brokers that the producer will use to establish connection to the kafka cluster.
+				- This list doesn’t need to include all brokers, since the producer will get more information after the initial connection.
+				- But it is recommended to include at least two, so in case one broker goes down, the producer will still be able to connect to the cluster.
+			
+			2) key.serializer
+				- Name of a class that will be used to serialize the keys of the records we will produce to Kafka.
+				- Kafka brokers expect byte arrays as keys and values of messages.
+				- key.serializer should be set to a name of a class that implements the org.apache.kafka.common.serialization.Serializer interface.
+				- The kafka client package includes ByteArraySerializer,StringSerializer , and IntegerSerializer, if we want to use other then these
+					we have to use implement the our class.
+				- NOTE : Setting key.serializer is required even if you intend to send only values.
+			
+			3) value.serializer
+				- Name of a class that will be used to serialize the values of the records we will produce to Kafka.
+	
+		- The following code snippet shows how to create a new producer by setting just the mandatory parameters and using defaults for everything else:
+			
+		-----------------------------------------------------------------------------------------------------
+		|	 private Properties kafkaProps = new Properties();		--(1)		           					|
+		|	 kafkaProps.put("bootstrap.servers","broker1:9092,broker2:9092");							 	|
+		|	 kafkaProps.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer");--(2)|
+		|	 kafkaProps.put("value.serializer","org.apache.kafka.common.serialization.StringSerializer");	|
+		|	 																								|
+		|	 producer = new KafkaProducer<String.String>(kafkaProps);  ---(3)								|
+		|																									|
+		-----------------------------------------------------------------------------------------------------
+			
+		(1) We start with a Properties object.
+		(2) Since we plan on using strings for message key and value, we use the built-in StringSerializer.
+		(3) Here we create a new producer by setting the appropriate key and value types and passing the Properties object.
+	
+	-- Once we instantiate a producer, it is time to start sending messages. There are three Once we instantiate a producer, it is time to start sending messages.
+			There are three
+		
+		1) Fire-and-forget
+			- We send a message to the server and don’t really care if it arrives succesfully or not.
+			- Most of the time, it will arrive successfully, since Kafka is highly available and the producer will retry sending messages automatically.
+			- However, some messages will get lost using this method.
+		
+		2) Synchronous send
+			- We send a message, the send() method returns a Future object, and we use get() to wait on the future and see if the send() was successful or not.
+		
+		3) Asynchronous send
+			- We call the send() method with a callback function, which gets triggered when it receives a response from the Kafka broker.
+	
+		
+	-- Sending a Message to Kafka
+		The simplest way to send a message is as follows:						
+		-------------------------------------------------------------------------------------------------------------------------
+		|																														|
+		|	ProducerRecord<String,String> record = new ProducerRecord<>("CustomerCountry","Precision Products","France"); --(1)	|
+		|																														|
+		|	try{																												|
+		|			producer.send(record); --(2)																				|				
+		|	   } catch(Exception e){																							|				
+		|			e.printStackTrace(); --(3)																					|	
+		|	   }																												|
+		-------------------------------------------------------------------------------------------------------------------------
+		(2) We use the producer object send() method to send the producerRecord. The send() method returns a Java Future object with RecordMetadata , 
+			but since we simply ignore the returned value, we have no way of knowing whether the message was sent successfully or not.
+				
+	-- Sending a Message Synchronously
+		The simplest way to send a message synchronously is as follows:
+		--------------------------------------------------------------------------------------------------------------------
+		|																													|
+		|	ProducerRecord<String,String> record = new ProducerRecord<>("CustomerCountry","Precision Products","France");	|
+		|																													|
+		|	try{																											|
+		|			producer.send(record).get();--(1)																		|				
+		|	   } catch(Exception e){																						|				
+		|			e.printStackTrace(); --(2)																				|	
+		|	   }																											|
+		---------------------------------------------------------------------------------------------------------------------			
+
+		(1) -- Here, we are using Future.get() to wait for a reply from kafka. This method will through an exception if the record
+				is not send successfully to kafka.If there were no errors, we will get a RecordMetadata object that we can use to 
+				retrieve the offset the message was written to.
+		(2) -- If there were any errors before sending data to Kafka, while sending, if the Kafka brokers returned a nonretriable exceptions 
+				or if we exhausted the available retries, we will encounter an exception.		
+				
+				
+											KafkaProducer has two types of errors.	
+															|	
+															|	
+						----------------------------------------------------------------------------
+						|																			|	
+				Retriable errors															Retriable exception
+	1) a connection error can be resolved because the 									1)“message size too large.”
+		connection may get reestablished.	
+	2) A “no leader” error can be resolved when a
+		new leader is elected for the partition.	
+					
+					
+	-- Sending a Message Asynchronously
+		- we do need to know when we failed to send a message completely so we can throw an exception, log an error, or 
+			perhaps write the message to an “errors” file for later analysis.
+		- In order to send messages asynchronously and still handle error scenarios, the producer supports adding a callback when sending a record.			
+		
+		-------------------------------------------------------------------------------------------------------------------------
+		|																														|		
+		|	private class DemoProducerCallback implements Callback { --(1)														|		
+		|			@Override																									|		
+		|		public void onCompletion(RecordMetadata recordMetadata, Exception e) {											|							
+		|			if(e != null){																								|		
+		|				e.printStackTrace(); --(2)																				|						
+		|				}																										|		
+		|			}																											|		
+		|		}  																												|
+		|																														|		
+		|	ProducerRecord<String, String> record = new ProducerRecord<>("CustomerCountry", "Biomedical Materials", "USA");--(3)|		
+		|	producer.send(record,new DemoProducerCallback()); --(4)																|		
+		|																														|		
+		-------------------------------------------------------------------------------------------------------------------------
+						
+			(1) To use callbacks, you need a class that implements the org.apache.kafka.clients.producer.Callback interface,
+					which has a single function -- onCompletion()
+			(2) If Kafka returned an error, onCompletion() will have a nonnull exception. Here we “handle” it by printing
+			(4) we pass a Callback object along when sending the record.		
+				
+				
+	-- Serializers				
+		- producer configuration includes mandatory serializers.			
+		- Kafka includes serializers for String,integers and ByteArrays , but this does not cover most use cases. Eventually, you will
+			want to be able to serialize more generic records.			
+		- We will start by showing how to write your own serializer and then introduce the Avro serializer as a recommended alternative.	
+					
+	-- Custom Serializers
+		- When the object you need to send to Kafka is not a simple string or integer, you have a choice of either using a generic serialization
+			library like Avro, Thrift, or Protobuf to create records, or creating a custom serialization for objects you are already using.
+		- It is really painfull to write the custom serializers and maintain them so better to use existing generic serializers like
+			json,Apache Avro,Thrift or Protobuf.
+		
+	-- Serializing Using Apache Avro
+		- Apache Avro is a language-neutral data serialization format.
+		- The schema is usually described in JSON and the serialization is usually to binary files, although serializing to JSON is also supported.
+		- Avro assumes that the schema is present when reading and writing files, usually by embedding the schema in the files themselves.					
+					
+		- Using Avro Records with Kafka
+			- Unlike Avro files, where storing the entire schema in the data file is associated with a fairly reasonable overhead, 
+				storing the entire schema in each record will usually more than double the record size.
+			- However, Avro still requires the entire schema to be present when reading the record, so we need to locate the schema elsewhere.		
+			- To achieve this, we follow a common architecture pattern and use a Schema Registry.		
+			- The Schema Registry is not part of Apache Kafka but there are several open source options to choose from. 
+			- We’ll use the Confluent Schema Registry for this example.		
+			- The idea is to store all the schemas used to write data to Kafka in the registry.
+			- Then we simply store the identifier for the schema in the record we produce to Kafka.
+			- The consumers can then use the identifier to pull the record out of the schema registry and deserialize the data.
+	 		- The key is that all this work—storing the schema in the registry and pulling it up when required—is done in the serializers and deserializers.
+	
+	
+			  |-----------------|						____________						____________________	
+			  |		Producer	|	Messages with	   |			|						|		Consumer	|
+			  |	______________	|	schema ID		   |	kafka	|						|					|	
+			  |	| Serializer | 	|--------------------->|	broker	|---------------------->|  _______________  |
+			  |	|____________|	|					   |			|						|  | Deserializer | |
+			  |					|					   |____________|						|  |______________| |
+			  |-----------------|															|___________________|
+					   |								_____________								  |
+					   |	Current version			   |             |								  |
+					   |	of schema				   |	Schema	 |								  |	
+					   |_______________________________|   Registry  |________________________________|	
+													   |			 |	
+													   |_____________|	
+	
+	-- Partitions
+		- Kafka messages are key-value pairs and while it is possible to create a ProducerRecord with just a topic and a value, 
+			with the key set to null by default,most applications produce records with keys.	
+		- Keys serve two goals:
+			1) they are additional information that gets stored with the message, and they are also used to decide
+				which one of the topic partitions the message will be written to.
+			2) All messages with the same key will go to the same partition.
+		- all the records for a single key will be read by the same process.
+		
+		- To create a key-value record, you simply create a ProducerRecord as follows:
+			ProducerRecord<Integer,String> record = new ProducerRecord<>("CustomerCountry", "Laboratory Equipment", "USA");
+			
+		- When creating messages with a null key, you can simply leave the key out:
+			ProducerRecord<Integer, String> record = new ProducerRecord<>("CustomerCountry", "USA");
+				- Here, the key will simply be set to null.
+				- When the key is null and the default partitioner is used, the record will be sent to one of the available partitions 
+					of the topic at random. A round-robin algorithm will be used to balance the messages among the partitions.
+
+		- If a key exists and the default partitioner is used, Kafka will hash the key and use
+			the result to map the message to a specific partition.
+		- The mapping of keys to partitions is consistent only as long as the number of partitions in a topic does not change.
+
+	-- Implementing a custom partitioning strategy
+		- Example of a custom partitioner:
+		________________________________________________________________________
+		| 	import org.apache.kafka.clients.producer.Partitioner;		 	    |
+		|	import org.apache.kafka.common.Cluster;					     		| 	
+		|	import org.apache.kafka.common.PartitionInfo;				      	|	
+		|	import org.apache.kafka.common.record.InvalidRecordException; 	    |
+		|	import org.apache.kafka.common.utils.Utils;				      		|	
+		|							     	             	      				|			
+		|	public class Customer implements Partitioner {				      	|
+		|										      							|							 
+		|		@Override                                                       |
+		|		public void configure(Map<String, ?> configs) {} - (1)          |
+		|										      							|
+		|		@Override							      						|	
+		|   	public int partition(String s, Object key, byte[] bytes,        |
+		|					Object o1, byte[] bytes1, Cluster cluster) {} 		|
+		|							  			      							|					
+		|   	@Override								      					|	
+		|   	public void close() {}							      			|
+		|										      							|	
+		|	}				                                              		|	
+		|_______________________________________________________________________|
+
+		NOTE: 
+			1) Partitioner interface includes configure, partition, and close methods.
+
+
+	-- Kafka Consumers: Reading Data from Kafka
+		- Applications that need to read data from Kafka use a KafkaConsumer to subscribe to
+			Kafka topics and receive messages from these topics.
+		
+		-- Consumers and Consumer Groups
+		   - Just like multiple producers can write to the same topic, we need to allow multiple consumers to read from the same
+				topic, splitting the data between them.	
+			- Kafka consumers are typically part of a consumer group.
+			- When multiple consumers are subscribed to a topic and belong to the same consumer group, each consumer in
+				the group will receive messages from a different subset of the partitions in the topic.
+			- The main way we scale data consumption from a Kafka topic is by adding more consumers to a consumer group.
+			- It is common for Kafka consumers to do high-latency operations such as write to a database or a time-consuming 
+			  computation on the data.	
+			- In these cases, a single consumer can’t possibly keep up with the rate data flows into a topic, and adding more consumers
+			   that share the load by having each consumer own just a subset of the partitions and messages is our main method of scaling.
+			- This is a good reason to create topics with a large number of partitions—it allows adding more
+				consumers when the load increases.
+			- Keep in mind that there is no point in adding more consumers than you have partitions in a topic—some of the 
+				consumers will just be idle.
+
+			- In addition to adding consumers in order to scale a single application, it is very common
+				to have multiple applications that need to read data from the same topic.
+			- one of the main design goals in Kafka was to make the data produced to Kafka topics
+				available for many use cases throughout the organization.	
+			
+			- To summarize, you create a new consumer group for each application that needs all
+				the messages from one or more topics.	
+			- You add consumers to an existing consumer group to scale the reading and processing of messages from the topics, 
+			  so each additional consumer in a group will only get a subset of the messages.
+
+		-- Consumer Groups and Partition Rebalance
+			- consumers in a consumer group share ownership of the partitions in the topics they subscribe to.
+			- When we add a new consumer to the group, it starts consuming messages from partitions previously 
+				consumed by another consumer.
+			- The same thing happens when a consumer shuts down or crashes;
+			- it leaves the group, and the partitions it used to consume will be consumed by one of the remaining consumers.
+			- Reassignment of partitions to consumers also happen when the topics the consumer group is consuming are modified.
+		
+			- Moving partition ownership from one consumer to another is called a rebalance.
+			- Rebalances are important because they provide the consumer group with high availability and scalability.	
+			- During a rebalance, consumers can’t consume messages, so a rebalance is basically a short window of unavailability
+				of the entire consumer group.	
+			- In addition, when partitions are moved from one consumer to another, the consumer loses its current state;	
+			
+			- The way consumers maintain membership in a consumer group and ownership of the partitions assigned to them is by sending
+			  heartbeats to a Kafka broker designated as the group coordinator (this broker can be different for different consumer groups).
+			- As long as the consumer is sending heartbeats at regular intervals, it is assumed to be alive, well, and processing messages from
+			 its partitions. Heartbeats are sent when the consumer polls (i.e., retrieves records) and when it commits records it has consumed.
+			- If the consumer stops sending heartbeats for long enough, its session will time out and the group coordinator
+				will consider it dead and trigger a rebalance.
+			- If a consumer crashed and stopped processing messages, it will take the group coordinator a few
+				seconds without heartbeats to decide it is dead and trigger the rebalance.
+			- During those seconds, no messages will be processed from the partitions owned by the dead consumer. 
+			
+		-- How Does the Process of Assigning Partitions to Brokers Work?
+			- When a consumer wants to join a group, it sends a JoinGroup request to the group coordinator.
+			- The first consumer to join the group becomes the group leader.
+			- The leader receives a list of all consumers in the group from the group coordinator (this will include all consumers that sent a
+			   heartbeat recently and which are therefore considered alive) and is responsible for assigning a subset of partitions to each consumer.
+			- It uses an implementation of PartitionAssignor to decide which partitions should be handled by which consumer.
+			- Kafka has two built-in partition assignment policies, which we will discuss in more depth in the configuration section.
+			- After deciding on the partition assignment, the consumer leader sends the list of assignments to the GroupCoordinator, 
+				which sends this information to all the consumers.
+			- Each consumer only sees his own assignment the leader is the only client process that has the full list of
+				consumers in the group and their assignments.	
+			- This process repeats every time a rebalance happens.
+			
+		-- Creating a Kafka Consumer
+			- The first step to start consuming records is to create a KafkaConsumer instance.
+			- To start we just need to use the three mandatory properties: bootstrap.servers , key.deserializer , and value.deserializer.
+			- The first property, bootstrap.servers , is the connection string to a Kafka cluster.
+			- The other two properties, key.deserializer and value.deserializer ,are similar to the serializers defined for 
+				the producer, but rather than specifying classes that turn Java objects to byte arrays, you need to 
+				specify classes that can take a byte array and turn it into a Java object.
+			- There is a fourth property, which is not strictly mandatory, The property is group.id and it specifies the consumer group the
+				KafkaConsumer instance belongs to.
+			
+			- The following code snippet shows how to create a KafkaConsumer :
+			___________________________________________________________________________
+			|																		  |	
+			|	Properties props = new Properties();								  |
+			|	props.put("bootstrap.servers", "broker1:9092,broker2:9092");		  |
+			|	props.put("group.id", "CountryCounter");			 				  | 
+			|	props.put("key.deserializer",					  					  |
+			|	"org.apache.kafka.common.serialization.StringDeserializer"); 	      |
+			|	props.put("value.deserializer",					  					  |
+			|	"org.apache.kafka.common.serialization.StringDeserializer");	      |
+			|	KafkaConsumer<String, String> consumer = new KafkaConsumer<String,    |
+			|	String>(props);							  							  |
+			|_________________________________________________________________________|
+			
+			
+			- Subscribing to Topics
+				-	Once we create a consumer, the next step is to subscribe to one or more topics. 
+				-	The subcribe() method takes a list of topics as a parameter, so it’s pretty simple to use:
+					
+					consumer.subscribe(Collections.singletonList("customerCountries"));
+					
+				- Here we simply create a list with a single element: the topic name customerCountries.
+				- It is also possible to call subscribe with a regular expression.
+				- This is useful for applications that need to consume from multiple topics and can handle 
+					the different types of data the topics will contain.
+					
+				- To subscribe to all test topics, we can call:
+						consumer.subscribe("test.*");	
+			
+			-- The Poll Loop
+				- At the heart of the consumer API is a simple loop for polling the server for more data.
+				- Once the consumer subscribes to topics, the poll loop handles all details of coordination, partition rebalances, 
+					heartbeats, and data fetching, leaving the developer with a clean API that simply returns available data from 
+					the assigned partitions.
+				- The main body of a consumer will look as follows:
+				_______________________________________________________________________________
+					try {
+						while (true) {   --(1)
+							ConsumerRecords<String, String> records = consumer.poll(100); --(2)
+							for (ConsumerRecord<String, String> record : records)    --(3)
+							{
+								log.debug("topic = %s, partition = %s, offset = %d,
+								customer = %s, country = %s\n",
+								record.topic(), record.partition(), record.offset(),
+								record.key(), record.value());
+								int updatedCount = 1;
+								if (custCountryMap.countainsValue(record.value())) {
+								updatedCount = custCountryMap.get(record.value()) + 1;
+								}
+								custCountryMap.put(record.value(), updatedCount)
+								JSONObject json = new JSONObject(custCountryMap);
+								System.out.println(json.toString(4))	--(4)
+							}
+						}
+					} finally {
+					consumer.close();  --(5)
+					}
+				________________________________________________________________________________
+			
+			
+			explaination:
+				1) This is indeed an infinite loop. Consumers are usually long-running applications
+					that continuously poll Kafka for more data.
+				2) This is the most important line in the chapter.consumers must keep polling Kafka or they will be 
+					considered dead and the partitions they are consuming will be handed to another consumer in the 
+					group to continue consuming.The parameter we pass, poll() ,is a timeout interval and controls how 
+					long poll() will block if data is not available in the consumer buffer.
+				3) poll() returns a list of records. Each record contains the topic and partition the record came from, 
+					the offset of the record within the partition, and of course the key and the value of the record.
+				5) Always close() the consumer before exiting. This will close the network connections and sockets. 
+					It will also trigger a rebalance immediately rather than wait for the group coordinator to discover 
+					that the consumer stopped sending heartbeats and is likely dead, which will take longer and therefore 
+					result in a longer period of time in which consumers can’t consume messages from a subset of the partitions.
+			
+			NOTE:
+				- The poll loop does a lot more than just get data. 
+				- The first time you call poll() with a new consumer, it is responsible for finding the GroupCoordinator,joining the 
+				  consumer group, and receiving a partition assignment. 
+				- If a rebalance is triggered, it will be handled inside the poll loop as well. And of course the heartbeats 
+				  that keep consumers alive are sent from within the poll loop. For this reason, we try to make sure
+					that whatever processing we do between iterations is fast and efficient.
+			
+			-- Thread Safety
+				- You can’t have multiple consumers that belong to the same group in one thread and you can’t have multiple 
+					threads safely use the same consumer.
+				- One consumer per thread is the rule. To run multiple consumers in the same group in one application, 
+					you will need to run each in its own thread.
+				- It is useful to wrap the consumer logic in its own object and then use Java’s ExecutorService
+					to start multiple threads each with its own consumer.
+				- for example refer->https://www.confluent.io/blog/tutorial-getting-started-with-the-new-apache-kafka-0-9-consumer-client/
+			
+			
+			

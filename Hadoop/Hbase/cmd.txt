@@ -1,0 +1,22 @@
+## apache hbase is an columnar storage for hadoop.
+
+#List the tables.
+list
+
+#Create the table
+create 'Emp','personal_data','professional_data'
+
+#Describe the table.
+desc Emp;
+
+#Inserting the data.
+put 'Emp','1','personal_data:name','myName'
+put 'Emp','1','personal_data:age','26'
+put 'Emp','1','professional_data:experience','2'
+
+#Retrieving data.
+scan 'Emp'
+
+#To drop the table we need to disable the table first.
+disable 'Emp';
+drop 'Emp';
