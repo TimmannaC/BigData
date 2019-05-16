@@ -47,11 +47,11 @@ ___
 - The executors are responsible for actually carrying out the work that the driver assigns them.
 - This means that each executor is responsible for only two things:
     - executing code assigned to it by the driver
-    - reporting the state of the computation on that executor back to      the driver node
+    - reporting the state of the computation on that executor back to the driver node
 
     ![Alt text](images/spark_cluster.png?raw=true "Spark Cluster")
 
-- In the above figure we can see the driver on the left and four           executors on the right.
+- In the above figure we can see the driver on the left and four executors on the right.
 - In this diagram, we removed the concept of cluster nodes.
 - The user can specify how many executors should fall on each
   node through configurations.
@@ -65,26 +65,26 @@ ___
    your individual computer instead of a cluster.
 
 ### Here are the key points to understand about Spark Applications at this point:
-1) Spark employs a cluster manager that keeps track of the resources        available.
-2) The driver process is responsible for executing the driver program’s     commands across the executors to complete a given task.
+1) Spark employs a cluster manager that keeps track of the resources available.
+2) The driver process is responsible for executing the driver program’s commands across the executors to complete a given task.
 3) The executors, for the most part, will always be running Spark code.
-4) The driver can be “driven” from a number of different languages          through Spark’s language APIs.
+4) The driver can be “driven” from a number of different languages through Spark’s language APIs.
 ___
 
 ## Spark’s Language APIs
-- Spark’s language APIs make it possible for you to run Spark code using   various programming languages.
+- Spark’s language APIs make it possible for you to run Spark code using various programming languages.
 - Spark presents some core “concepts” in every language; these concepts
   are then translated into Spark code that runs on the cluster of machines.
 - Scala
     - Spark is primarily written in Scala, making it Spark’s “default” language.
 - Java
-    - Even though Spark is written in Scala, Spark’s authors have been     careful to ensure that you can write Spark code in Java.
+    - Even though Spark is written in Scala, Spark’s authors have been careful to ensure that you can write Spark code in Java.
 - Python
     - Python supports nearly all constructs that Scala supports.
 - SQL
-    - Spark supports a subset of the ANSI SQL 2003 standard. This makes    it easy for analysts and non-programmers to take advantage of the    big data powers of Spark.
+    - Spark supports a subset of the ANSI SQL 2003 standard. This makes it easy for analysts and non-programmers to take advantage of the    big data powers of Spark.
 - R
-    - Spark has two commonly used R libraries: one as a part of            Sparkcore (SparkR) and another as an R community-driven package      (sparklyr).
+    - Spark has two commonly used R libraries: one as a part of Sparkcore (SparkR) and another as an R community-driven package (sparklyr).
 
     ![alt](images/relation_btw_Spark_session&sparkLanguageAPI.png)
 
@@ -123,7 +123,7 @@ ___
 
         ![alt](images/dataframe.png)
 - The DataFrame concept is not unique to Spark. R and Python both have similar concepts.
-- However, Python/R DataFrames (with some exceptions) exist on one machine rather than multiple       machines.
+- However, Python/R DataFrames (with some exceptions) exist on one machine rather than multiple machines.
 
 ### NOTE
 - Spark has several core abstractions:
@@ -136,15 +136,15 @@ ___
 - To allow every executor to perform work in parallel, Spark breaks up the data into chunks called
   partitions.
 - A partition is a collection of rows that sit on one physical machine in your cluster.
-- A DataFrame’s partitions represent how the data is physically distributed across the cluster of     machines during execution.
+- A DataFrame’s partitions represent how the data is physically distributed across the cluster of machines during execution.
 - If you have one partition, Spark will have a parallelism of only one, even if you
   have thousands of executors.
-- If you have many partitions but only one executor, Spark will still have a parallelism of only      one because there is only one computation resource.
-- An important thing to note is that with DataFrames you do not (for the most part) manipulate        partitions manually or individually.
-- You simply specify high-level transformations of data in the physical partitions, and Spark         determines how this work will actually execute on the cluster.
+- If you have many partitions but only one executor, Spark will still have a parallelism of only one because there is only one computation resource.
+- An important thing to note is that with DataFrames you do not (for the most part) manipulate partitions manually or individually.
+- You simply specify high-level transformations of data in the physical partitions, and Spark determines how this work will actually execute on the cluster.
 
 ### Transformations
-- In Spark, the core data structures are immutable, meaning they cannot be changed after              they’recreated.
+- In Spark, the core data structures are immutable, meaning they cannot be changed after they’recreated.
 - Transformations are the core of how you express your business logic using Spark.
 - There are two types of transformations.
     - those that specify narrow dependencies
@@ -157,8 +157,8 @@ ___
 
 - A wide dependency (or wide transformation) style transformation will have input partitions
   contributing to many output partitions.
-- You will often hear this referred to as a shuffle whereby Spark will exchange partitions across     the cluster.
-- With narrow transformations, Spark will automatically perform an operation called pipelining,       meaning that if we specify multiple filters on DataFrames, they’ll all be performed in-memory.
+- You will often hear this referred to as a shuffle whereby Spark will exchange partitions across the cluster.
+- With narrow transformations, Spark will automatically perform an operation called pipelining, meaning that if we specify multiple filters on DataFrames, they’ll all be performed in-memory.
 - The same cannot be said for shuffles. When we perform a shuffle, Spark writes the results to disk.
     
     ![alt](images/wide_transformations.png)
@@ -169,3 +169,45 @@ ___
 ___
 
 ### Lazy Evaluation
+- Lazy evaulation means that Spark will wait until the very last moment to execute the graph of computation instructions.
+- In Spark, instead of modifying the data immediately when you express some operation, you build up a plan of transformations that you would like to apply to your source data.
+- By waiting until the last minute to execute the code, Spark compiles this plan from your raw DataFrame transformations to a streamlined physical plan that will run as efficiently as possible across the
+  cluster.
+- This provides immense benefits because Spark can optimize the entire data flow from end to end.
+- An example of this is something called predicate pushdown on DataFrames.
+- If we build a large Spark job but specify a filter at the end that only requires us to fetch one row from our source data, the most efficient way to execute this is to access the single record that we need.
+- Spark will actually optimize this for us by pushing the filter down automatically.
+___
+
+### Actions
+- Transformations allow us to build up our logical transformation plan.To trigger the computation, we run an action.
+- An action instructs Spark to compute a result from a series of transformations.
+- The simplest action is count, which gives us the total number of records in the DataFrame.
+  ```divisBy2.count()```
+- There are three kinds of actions:
+    - Actions to view data in the console.
+    - Actions to collect data to native objects in the respective language.
+    - Actions to write to output data sources.
+___
+
+### Spark UI
+- You can monitor the progress of a job through the Spark web UI.
+- The Spark UI is available on port 4040 of the driver node.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
