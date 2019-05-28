@@ -664,14 +664,69 @@ ___
      }'
      ```
 					
-					
-					
-					
-					
-							
-							
-							
-							
+## Chapter 6 : Text and Numeric Queries
+
+- Type of queries used in ElasticSearch are :
+### Using a term query
+- Searching or filtering for a particular term is very frequent. Term queries work with exact value matches and are            generally very fast.
+- The term queries can be compared to the equal “=” query in the SQL world (for not tokenized fields).			
+```
+	curl -XPOST 'http://127.0.0.1:9200/test-index/test-
+	type/_search?pretty=true' -d '{
+	"query": {
+	"term": {
+	"uuid": "33333"
+	}
+	}
+	}'
+```
+- For executing a term query as a filter, we need to use it wrapped in a Boolean query. The preceding term query will be executed in this way:					
+```
+	curl -XPOST 'http://127.0.0.1:9200/test-index/test-
+	type/_search?pretty=true' -d '{
+	"query": {
+	"bool": {
+	"filter": {
+	"term": {
+	"uuid": "33333"
+	}
+	}
+	}
+	}
+	}'
+```
+### Using a terms query
+- The previous type of search works very well for single term search.
+- If you want search for multiple terms, you can process it in two ways: using a boolean query or using a multi-term
+  query.
+```
+	curl -XPOST 'http://127.0.0.1:9200/test-index/test-
+	type/_search?pretty=true' -d '{
+	"query": {
+	"terms": {
+	"uuid": ["33333", "32222"]
+	}
+	}
+	}'
+```
+### Using a prefix query
+- The prefix query is used when only the starting part of a term is known. It allows completing truncated or partial terms.
+```
+	curl -XPOST 'http://127.0.0.1:9200/test-index/test-
+	type/_search?pretty=true' -d '{
+	"query": {
+	"prefix": {
+	"uuid": "222"
+	}
+	}
+	}'
+```
+
+### Using a wildcard query
+- The wildcard query is used when a part of a term is known. It allows completing truncated or partial terms.
+- The wildcard is very similar to a regular expression, but it has only two special characters:
+	- * : This means match zero or more characters
+	- ? : This means match one character
 							
 							
 							
