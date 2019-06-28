@@ -47,8 +47,21 @@ LOCATION 'File Name';
 UDF         ---     USER DEFINED FUNCTIONS
 UDAF        ---     USER DEFINED AGGREGATION FUNCTIONS
 UDTF        ---     USER DEFINED TABLE FUNCTIONS
+___
 
-/*****************************************************************************************************************************/
+### Loading data from file to Hive table and vice-versa.
+1) Loading the data from file to hive table.
+```
+$> LOAD DATA LOCAL INAPTH 'file_path' OVERWRITE INTO TABLE temp_table;
+```
+
+2) Loading the data from hive table into the file.
+```
+$>  INSERT OVERWRITE DIRECTORY '/tmp/output_folder' SELECT a.* from a where a.ds='2018-02-02';
+$>  INSERT OVERWRITE TABLE test SELECT a.* from a where a.ds='2018-02-02';
+```
+___
+
 #Functions in Hive;
 
 ##To see all available functions in hive;
