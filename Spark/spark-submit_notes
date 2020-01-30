@@ -1,0 +1,34 @@
+# spark-submit commands.
+
+1) basic command with default settings.
+    --master local[*]
+    --deploy-mode client
+    --driver-memory 1G
+    --executor-memory 1G
+    --queue default
+    --num-executors 2
+$> spark-submit python_file.py
+
+
+2) with custom settings.
+
+  1)   we want to use resource manager as yarn & we want driver program to run on the same job submitted m/c with driver memory as 2G & executor memory as 2G
+       & number of executor to be 5
+    
+    $> spark-submit --master yarn --deploy-mode client --driver-memory 1G --driver-memory 2G --executor-memory 2G python_file.py
+
+  2)    we want to use resource manager as yarn & we want driver program to run on one of the yarn container with driver memory as 2G & executor memory as 2G
+       & number of executor to be 5
+
+    $> spark-submit --master yarn --deploy-mode cluster --driver-memory 1G --driver-memory 2G --executor-memory 2G python_file.py
+
+
+    3) If you want to download some maven jars which are used by spark-application.
+    $> spark-submit --packages group-id:artifact-id:version python_file.py
+
+    4) If we want to provide an external jar.
+    $> spark-submit --jars path_to_jar_file python_file.py
+
+    5) If we want to supply config files.
+    $> spark-submit --files confi_file_path python_file.py
+    
