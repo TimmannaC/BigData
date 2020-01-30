@@ -1,0 +1,55 @@
+#) reading from a file source & rdbms using spark.
+
+1) reading from a datasource.
+
+ - reading file with header.
+    df = spark.read.option("header", "true").option("inferschema", "true").load("file_path")
+
+
+
+ - reading file in spark with inferschema option enabled.
+   - using inferschema option spark will automatically infer the schema of the data source
+    df = spark.read.option("header", "true").option("inferschema", "true").load("file_path")
+ 
+ - reading a data from RDBMS.
+    - using databaseName & tableName option.
+    df = spark.read.option("url", "jdbc:mysql://localhost")\
+                    .option("dbtable", "databaseName.tableName")\
+                    .option("user", "username")\
+                    .option("password", "password")\
+                    .load()
+
+
+    - using sql query want to import the data.
+    df = spark.read.option("url", "jdbc:mysql://localhost")\
+                    .option("query", "SELECT *FROM test_db.test_tb WHERE id=='100'")\
+                    .option("user", "username")\
+                    .option("password", "password")\
+                    .load() 
+
+
+
+
+2) performing data validations.
+    - we will filter not null columns & if date columns then changing there format to predefined format.
+    
+    from pyspark.sql.functions import col, to_date
+
+        df1 = df.filter(col("id").isNotNull(),col("firstname").isNotNull())
+        df2 = df1.withColumn("current_date", to_date(df.dateColumn, "mm-dd-yyyy").alias("date")).drop("current_date")
+
+
+
+3) Writing to dataframe to datalake.
+    // key points to keep in mind while Writing are.
+        - Default file format will be parquet if the requirement is to store in diff file format then need to specify.
+        - mode types.
+            1) overwrite -> Overwrite existing data.
+            2) append ->  Append contents of this DataFrame to existing data.
+            3) ignore -> Silently ignore this operation if data already exists.
+            4) error or errorifexists  ->  Throw an exception if data already exists.
+
+        1) Save the dataframe as file & then create an hive external table using that path.
+        df.write.repartition(1).mode("overwrite").format("orc").save("hdfs://location-to-save-the-file")
+        
+        
